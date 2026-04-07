@@ -1,7 +1,7 @@
 // ============================================================
 // FILE: src/App.jsx
-// PURPOSE: Root component with routing for all pages
-// UPDATED: Added /home route for HomePage
+// PURPOSE: Root component with ALL routes
+// UPDATED: Added /forgot-password route — all pages complete!
 // ============================================================
 
 import React from "react";
@@ -15,6 +15,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import HomePage from "./pages/HomePage";
+import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 
 function App() {
   return (
@@ -26,17 +27,13 @@ function App() {
           {/* Authentication pages */}
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
 
           {/* Main app page */}
           <Route path="/home" element={<HomePage />} />
 
           {/* Redirect root to login */}
           <Route path="/" element={<Navigate to="/login" replace />} />
-
-          {/* 
-            COMING LATER:
-            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-          */}
         </Routes>
       </BrowserRouter>
     </ThemeProvider>
