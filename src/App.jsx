@@ -1,121 +1,57 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+// ============================================================
+// FILE: src/App.jsx
+// PURPOSE: The root component — entry point for all pages
+// ============================================================
+
+import React from "react";
+
+// Step 5a: Import ThemeProvider from MUI
+// ThemeProvider wraps your app so ALL MUI components
+// automatically use your custom theme (colors, fonts, etc.)
+import { ThemeProvider } from "@mui/material/styles";
+
+// Step 5b: Import CssBaseline from MUI
+// CssBaseline resets browser default styles (margins, paddings)
+// so your app looks the same across Chrome, Firefox, Safari, etc.
+import CssBaseline from "@mui/material/CssBaseline";
+
+// Step 5c: Import our custom theme
+import theme from "./theme";
+
+// Step 5d: Import the LoginPage component
+import LoginPage from "./pages/LoginPage";
+// ─────────────────────────────────────────────────────────────
+// STEP 5e: THE APP COMPONENT
+// Later, you'll add React Router here to switch between
+// LoginPage, RegisterPage, HomePage, etc.
+// For now, we just show LoginPage.
+// ─────────────────────────────────────────────────────────────
 
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+    // ThemeProvider passes our theme to ALL child MUI components
+    <ThemeProvider theme={theme}>
+      {/* CssBaseline normalizes styles across browsers */}
+      <CssBaseline />
 
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+      {/* 
+        For now, we render LoginPage directly.
+        
+        LATER (when you add more pages), you'll replace 
+        <LoginPage /> with React Router like this:
+        
+        <BrowserRouter>
+          <Routes>
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+            <Route path="/" element={<HomePage />} />
+          </Routes>
+        </BrowserRouter>
+      */}
+      <LoginPage />
+    </ThemeProvider>
+  );
 }
 
-export default App
+export default App;
