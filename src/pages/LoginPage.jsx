@@ -1,7 +1,7 @@
 // ============================================================
 // FILE: src/pages/LoginPage.jsx
 // PURPOSE: Login page — with React Router navigation
-// UPDATED: Added useNavigate for "Create Account" link
+// UPDATED: onSubmit now navigates to /home
 // ============================================================
 
 import React from "react";
@@ -9,12 +9,10 @@ import { useFormik } from "formik";
 import * as Yup from "yup";
 import { Box, Typography, TextField, Button, Link } from "@mui/material";
 import styled from "styled-components";
-
-// NEW: Import useNavigate for client-side navigation
 import { useNavigate } from "react-router-dom";
 
 // ─────────────────────────────────────────────────────────────
-// STYLED COMPONENTS (same as before — no changes)
+// STYLED COMPONENTS
 // ─────────────────────────────────────────────────────────────
 
 const PageWrapper = styled.div`
@@ -131,7 +129,7 @@ const LinksRow = styled.div`
 `;
 
 // ─────────────────────────────────────────────────────────────
-// VALIDATION SCHEMA (same as before — no changes)
+// VALIDATION SCHEMA
 // ─────────────────────────────────────────────────────────────
 
 const validationSchema = Yup.object({
@@ -149,7 +147,6 @@ const validationSchema = Yup.object({
 // ─────────────────────────────────────────────────────────────
 
 const LoginPage = () => {
-  // NEW: useNavigate hook for navigation
   const navigate = useNavigate();
 
   const formik = useFormik({
@@ -158,9 +155,15 @@ const LoginPage = () => {
       password: "",
     },
     validationSchema: validationSchema,
+
+    // ── CHANGED: Navigate to home page instead of showing alert ──
+    // Before:  alert(`Login attempt:\nEmail: ${values.email}`);
+    // After:   navigate("/home");
+    // Later when you add a backend, you'll first call your API
+    // to verify credentials, and only navigate on success.
     onSubmit: (values) => {
       console.log("Login submitted with:", values);
-      alert(`Login attempt:\nEmail: ${values.email}`);
+      navigate("/home");
     },
   });
 
@@ -221,11 +224,6 @@ const LoginPage = () => {
           </StyledButton>
 
           <LinksRow>
-            {/* 
-              UPDATED: "Create Account" now uses navigate()
-              Clicking this takes you to /register WITHOUT
-              reloading the page.
-            */}
             <Link
               href="/register"
               underline="none"

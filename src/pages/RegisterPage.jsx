@@ -1,36 +1,20 @@
 // ============================================================
 // FILE: src/pages/RegisterPage.jsx
 // PURPOSE: Register page — matching the reference image
-// TECH: React + Material UI + styled-components + Formik + Yup
+// UPDATED: onSubmit now navigates to /login
 // ============================================================
-
-// ─────────────────────────────────────────────────────────────
-// STEP 1: IMPORTS
-// Same imports as LoginPage — you already know these!
-// ─────────────────────────────────────────────────────────────
 
 import React from "react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import { Box, Typography, TextField, Button, Link } from "@mui/material";
 import styled from "styled-components";
-
-// NEW IMPORT: useNavigate from React Router
-// This lets us navigate to other pages programmatically
-// (e.g., clicking "Back" takes us to the login page)
 import { useNavigate } from "react-router-dom";
 
 // ─────────────────────────────────────────────────────────────
-// STEP 2: STYLED COMPONENTS
-// These are the SAME styles as LoginPage.
-// 
-// TIP FOR LATER: When you see duplicate code like this,
-// you can move shared styles to a separate file like
-// src/styles/SharedStyles.js and import them in both pages.
-// For now, keeping them here makes it easier to learn.
+// STYLED COMPONENTS
 // ─────────────────────────────────────────────────────────────
 
-// --- PageWrapper: Full-page grey background ---
 const PageWrapper = styled.div`
   min-height: 100vh;
   width: 100%;
@@ -44,7 +28,6 @@ const PageWrapper = styled.div`
   }
 `;
 
-// --- RegisterCard: The grey container with rounded corners ---
 const RegisterCard = styled.div`
   width: 100%;
   max-width: 420px;
@@ -60,7 +43,6 @@ const RegisterCard = styled.div`
   }
 `;
 
-// --- StyledTextField: White input with rounded corners ---
 const StyledTextField = styled(TextField)`
   && {
     margin-bottom: 12px;
@@ -106,7 +88,6 @@ const StyledTextField = styled(TextField)`
   }
 `;
 
-// --- StyledButton: Blue Register button with rounded corners ---
 const StyledButton = styled(Button)`
   && {
     width: 100%;
@@ -134,9 +115,6 @@ const StyledButton = styled(Button)`
   }
 `;
 
-// --- BackLink: Container for the "Back" link ---
-// DIFFERENCE FROM LOGIN: Only one link (no "Forgot password")
-// so we use align-items: flex-start to push it to the left
 const BackLinkWrapper = styled.div`
   margin-top: 12px;
 
@@ -146,12 +124,7 @@ const BackLinkWrapper = styled.div`
 `;
 
 // ─────────────────────────────────────────────────────────────
-// STEP 3: VALIDATION SCHEMA (Yup)
-// 
-// NEW CONCEPT: Confirm Password validation
-// We use Yup.ref('password') to check that confirmPassword
-// matches the password field. This is called "cross-field
-// validation" — one field's rule depends on another field.
+// VALIDATION SCHEMA
 // ─────────────────────────────────────────────────────────────
 
 const validationSchema = Yup.object({
@@ -162,29 +135,13 @@ const validationSchema = Yup.object({
   password: Yup.string()
     .min(6, "Password must be at least 6 characters")
     .required("Password is required"),
-
-  // NOTE: The reference image only shows Email and Password fields.
-  // But for a real register form, you'd typically also have a
-  // "Confirm Password" field. I'm keeping it as the image shows
-  // (just Email + Password), but here's how you'd add it later:
-  //
-  // confirmPassword: Yup.string()
-  //   .oneOf([Yup.ref('password'), null], 'Passwords must match')
-  //   .required('Confirm Password is required'),
 });
 
 // ─────────────────────────────────────────────────────────────
-// STEP 4: THE REGISTER COMPONENT
-//
-// NEW CONCEPTS IN THIS COMPONENT:
-// 1. useNavigate() — React Router hook for page navigation
-// 2. navigate("/login") — programmatic navigation (no page reload)
+// THE REGISTER COMPONENT
 // ─────────────────────────────────────────────────────────────
 
 const RegisterPage = () => {
-  // --- useNavigate: gives us a function to change pages ---
-  // navigate("/login") will take us to the login page
-  // WITHOUT refreshing the browser (this is called "client-side routing")
   const navigate = useNavigate();
 
   const formik = useFormik({
@@ -193,21 +150,21 @@ const RegisterPage = () => {
       password: "",
     },
     validationSchema: validationSchema,
+
+    // ── CHANGED: Navigate to login page instead of showing alert ──
+    // Before:  alert(`Registration attempt:\nEmail: ${values.email}`);
+    // After:   navigate("/login");
+    // Later when you add a backend, you'll first call your API
+    // to create the account, and only navigate on success.
     onSubmit: (values) => {
       console.log("Register submitted with:", values);
-      alert(`Registration attempt:\nEmail: ${values.email}`);
-
-      // After successful registration, navigate to login page
-      // In a real app, you'd first send data to your backend API,
-      // wait for success, THEN navigate.
-      // navigate("/login");
+      navigate("/login");
     },
   });
 
   return (
     <PageWrapper>
       <RegisterCard>
-        {/* ── HEADING: "Register" (bold, not italic) ── */}
         <Typography
           variant="h4"
           component="h1"
@@ -223,7 +180,6 @@ const RegisterPage = () => {
         </Typography>
 
         <Box component="form" onSubmit={formik.handleSubmit} noValidate>
-          {/* ── EMAIL FIELD ── */}
           <StyledTextField
             fullWidth
             id="email"
@@ -239,7 +195,6 @@ const RegisterPage = () => {
             helperText={formik.touched.email && formik.errors.email}
           />
 
-          {/* ── PASSWORD FIELD ── */}
           <StyledTextField
             fullWidth
             id="password"
@@ -255,7 +210,6 @@ const RegisterPage = () => {
             helperText={formik.touched.password && formik.errors.password}
           />
 
-          {/* ── REGISTER BUTTON ── */}
           <StyledButton
             type="submit"
             variant="contained"
@@ -264,27 +218,13 @@ const RegisterPage = () => {
             Register
           </StyledButton>
 
-          {/* ── BACK LINK ── */}
-          {/* 
-            NEW CONCEPT: onClick with navigate()
-            Instead of using href="/login" (which causes a full page reload),
-            we use onClick + navigate() for client-side navigation.
-            This is FASTER because React only updates the component,
-            not the entire page.
-            
-            e.preventDefault() stops the browser from following the href.
-          */}
           <BackLinkWrapper>
             <Link
               href="/login"
               underline="none"
               onClick={(e) => {
                 e.preventDefault();
-                // ↑ Prevents the browser from doing a full page reload
-                
                 navigate("/login");
-                // ↑ React Router changes the URL and renders LoginPage
-                //   without reloading the browser — much faster!
               }}
               sx={{
                 color: "#333333",
