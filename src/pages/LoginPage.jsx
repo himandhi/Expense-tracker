@@ -1,7 +1,6 @@
 // ============================================================
 // FILE: src/pages/LoginPage.jsx
-// PURPOSE: Login page — with React Router navigation
-// UPDATED: onSubmit now navigates to /home
+// UPDATED: Mobile responsive — card disappears on small screens
 // ============================================================
 
 import React from "react";
@@ -23,8 +22,14 @@ const PageWrapper = styled.div`
   align-items: center;
   background-color: #d4d4d4;
 
+  /*
+    MOBILE FIX: On small screens, remove the grey background
+    and let content fill the full white screen.
+  */
   @media (max-width: 600px) {
-    padding: 16px;
+    background-color: #ffffff;
+    align-items: flex-start;
+    padding-top: 60px;
   }
 `;
 
@@ -37,8 +42,16 @@ const LoginCard = styled.div`
   border-radius: 12px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
 
+  /*
+    MOBILE FIX: Remove card styling — no background, no border,
+    no shadow, no border-radius. Content sits directly on white bg.
+  */
   @media (max-width: 600px) {
-    padding: 32px 24px;
+    background-color: transparent;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    padding: 0 24px;
     max-width: 100%;
   }
 `;
@@ -80,9 +93,19 @@ const StyledTextField = styled(TextField)`
       color: #000000;
     }
 
+    /*
+      MOBILE FIX: Light grey background on inputs to match
+      the mobile design images.
+    */
     @media (max-width: 600px) {
+      background-color: #f0f0f0;
+
       .MuiOutlinedInput-root {
-        font-size: 0.9rem;
+        background-color: #f0f0f0;
+
+        fieldset {
+          border-color: #e0e0e0;
+        }
       }
     }
   }
@@ -108,10 +131,6 @@ const StyledButton = styled(Button)`
       background-color: #7ec4d9;
       color: #ffffff;
     }
-
-    @media (max-width: 600px) {
-      padding: 14px;
-    }
   }
 `;
 
@@ -120,12 +139,6 @@ const LinksRow = styled.div`
   justify-content: space-between;
   align-items: center;
   margin-top: 12px;
-
-  @media (max-width: 400px) {
-    flex-direction: column;
-    gap: 8px;
-    align-items: flex-start;
-  }
 `;
 
 // ─────────────────────────────────────────────────────────────
@@ -150,17 +163,8 @@ const LoginPage = () => {
   const navigate = useNavigate();
 
   const formik = useFormik({
-    initialValues: {
-      email: "",
-      password: "",
-    },
+    initialValues: { email: "", password: "" },
     validationSchema: validationSchema,
-
-    // ── CHANGED: Navigate to home page instead of showing alert ──
-    // Before:  alert(`Login attempt:\nEmail: ${values.email}`);
-    // After:   navigate("/home");
-    // Later when you add a backend, you'll first call your API
-    // to verify credentials, and only navigate on success.
     onSubmit: (values) => {
       console.log("Login submitted with:", values);
       navigate("/home");
@@ -215,11 +219,7 @@ const LoginPage = () => {
             helperText={formik.touched.password && formik.errors.password}
           />
 
-          <StyledButton
-            type="submit"
-            variant="contained"
-            disableElevation
-          >
+          <StyledButton type="submit" variant="contained" disableElevation>
             Sign In
           </StyledButton>
 
@@ -227,18 +227,13 @@ const LoginPage = () => {
             <Link
               href="/register"
               underline="none"
-              onClick={(e) => {
-                e.preventDefault();
-                navigate("/register");
-              }}
+              onClick={(e) => { e.preventDefault(); navigate("/register"); }}
               sx={{
                 color: "#333333",
                 fontSize: "0.85rem",
                 fontWeight: 500,
                 cursor: "pointer",
-                "&:hover": {
-                  textDecoration: "underline",
-                },
+                "&:hover": { textDecoration: "underline" },
               }}
             >
               Create Account
@@ -247,18 +242,13 @@ const LoginPage = () => {
             <Link
               href="/forgot-password"
               underline="none"
-              onClick={(e) => {
-                e.preventDefault();
-                navigate("/forgot-password");
-              }}
+              onClick={(e) => { e.preventDefault(); navigate("/forgot-password"); }}
               sx={{
                 color: "#333333",
                 fontSize: "0.85rem",
                 fontWeight: 400,
                 cursor: "pointer",
-                "&:hover": {
-                  textDecoration: "underline",
-                },
+                "&:hover": { textDecoration: "underline" },
               }}
             >
               Forgot password

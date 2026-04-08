@@ -1,10 +1,11 @@
 // ============================================================
 // FILE: src/pages/HomePage.jsx
-// PURPOSE: Expense Tracker home page
-// 
-// FIX: History is now a TRANSACTION history (not just expenses)
-//      Income appears in the list with a GREEN badge
-//      When you edit income, the Income entry updates automatically
+// UPDATED: Mobile responsive matching the mobile UI design
+//   - Title centered on mobile
+//   - Sign Out button full width on mobile
+//   - Cards stacked vertically
+//   - Form fields stacked vertically
+//   - History centered heading on mobile
 // ============================================================
 
 import React, { useState } from "react";
@@ -33,11 +34,12 @@ const PageWrapper = styled.div`
   background-color: #ffffff;
   padding: 24px 40px;
 
-  @media (max-width: 768px) {
-    padding: 16px 20px;
+  @media (max-width: 600px) {
+    padding: 16px;
   }
 `;
 
+// Header: side-by-side on desktop, stacked + centered on mobile
 const Header = styled.div`
   display: flex;
   justify-content: space-between;
@@ -47,10 +49,12 @@ const Header = styled.div`
   @media (max-width: 600px) {
     flex-direction: column;
     gap: 12px;
-    align-items: flex-start;
+    align-items: center;
+    text-align: center;
   }
 `;
 
+// Cards: 3 columns on desktop, 1 column on mobile
 const CardsRow = styled.div`
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -145,6 +149,7 @@ const AddExpenseSection = styled.div`
   margin-top: 16px;
 `;
 
+// Form fields: side-by-side on desktop, stacked on mobile
 const FormRow = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -213,10 +218,7 @@ const SearchField = styled(TextField)`
 // ─────────────────────────────────────────────────────────────
 
 const expenseValidationSchema = Yup.object({
-  name: Yup.string()
-    .trim()
-    .required("Name is required"),
-
+  name: Yup.string().trim().required("Name is required"),
   cost: Yup.number()
     .typeError("Cost must be a number")
     .positive("Cost must be greater than 0")
@@ -225,38 +227,15 @@ const expenseValidationSchema = Yup.object({
 
 // ─────────────────────────────────────────────────────────────
 // THE HOME PAGE COMPONENT
-//
-// HOW THE TRANSACTION HISTORY WORKS NOW:
-//
-// We store ONE list called "transactions" which has TWO types:
-//   - type: "expense"  → red badge (Shopping, Holiday, etc.)
-//   - type: "income"   → green badge (Income)
-//
-// When you edit income:
-//   1. The Income card updates
-//   2. The Income entry in History updates automatically
-//
-// Spent = sum of only "expense" type transactions
-// Remaining = Income - Spent
 // ─────────────────────────────────────────────────────────────
 
 const HomePage = () => {
   const navigate = useNavigate();
 
-  // ── STATE ──
-
-  // Income value (shown in the Income card)
   const [income, setIncome] = useState(0);
   const [isEditingIncome, setIsEditingIncome] = useState(false);
   const [incomeInput, setIncomeInput] = useState("");
 
-  // Transaction history: contains BOTH expenses AND income
-  // Each item has a "type" field: "expense" or "income"
-  //
-  // NEW CONCEPT: The "type" field
-  // By adding a type to each item, we can tell them apart:
-  //   - "expense" items get a RED badge and count toward "Spent"
-  //   - "income" items get a GREEN badge and DON'T count toward "Spent"
   const [transactions, setTransactions] = useState([
     { id: 1, name: "Shopping", cost: 500.0, type: "expense" },
     { id: 2, name: "Holiday", cost: 500.0, type: "expense" },
@@ -267,32 +246,21 @@ const HomePage = () => {
 
   const [searchTerm, setSearchTerm] = useState("");
 
-  // ── CALCULATIONS ──
-
-  // Spent = sum of ONLY expense-type transactions
   const totalSpent = transactions
     .filter((t) => t.type === "expense")
     .reduce((sum, t) => sum + t.cost, 0);
 
-  // Remaining = Income - Spent
   const remaining = income - totalSpent;
 
-  // Filtered transactions for search
   const filteredTransactions = transactions.filter((t) =>
     t.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // ── HANDLERS ──
-
   const handleDelete = (id) => {
-    // Find the transaction to check its type
     const transaction = transactions.find((t) => t.id === id);
-
-    // If deleting the income entry, reset income to 0
     if (transaction && transaction.type === "income") {
       setIncome(0);
     }
-
     setTransactions(transactions.filter((t) => t.id !== id));
   };
 
@@ -304,27 +272,17 @@ const HomePage = () => {
   const handleSaveIncome = () => {
     const newIncome = parseFloat(incomeInput);
     if (!isNaN(newIncome) && newIncome >= 0) {
-      // Update the income value
       setIncome(newIncome);
       setIsEditingIncome(false);
 
-      // FIX: Update or create the Income entry in transactions
-      // Check if an Income entry already exists
       const incomeExists = transactions.some((t) => t.type === "income");
-
       if (incomeExists) {
-        // Update existing Income entry
-        // .map() creates a new array where the income item has the new cost
         setTransactions(
           transactions.map((t) =>
             t.type === "income" ? { ...t, cost: newIncome } : t
           )
         );
-        // ↑ { ...t, cost: newIncome } means:
-        //   "copy everything from t, but replace cost with newIncome"
-        //   This is called the "spread operator" for objects.
       } else {
-        // Add new Income entry if it was previously deleted
         setTransactions([
           ...transactions,
           { id: Date.now(), name: "Income", cost: newIncome, type: "income" },
@@ -333,27 +291,21 @@ const HomePage = () => {
     }
   };
 
-  // ── FORMIK for Add Expense ──
   const formik = useFormik({
-    initialValues: {
-      name: "",
-      cost: "",
-    },
+    initialValues: { name: "", cost: "" },
     validationSchema: expenseValidationSchema,
     onSubmit: (values, { resetForm }) => {
       const newTransaction = {
         id: Date.now(),
         name: values.name.trim(),
         cost: parseFloat(values.cost),
-        type: "expense", // New items from the form are always expenses
+        type: "expense",
       };
-
       setTransactions([...transactions, newTransaction]);
       resetForm();
     },
   });
 
-  // ── JSX ──
   return (
     <PageWrapper>
       {/* ═══ HEADER ═══ */}
@@ -377,6 +329,11 @@ const HomePage = () => {
             borderRadius: "20px",
             padding: "8px 24px",
             "&:hover": { backgroundColor: "#d32f2f" },
+            // MOBILE: Full width button
+            "@media (max-width: 600px)": {
+              width: "100%",
+              borderRadius: "8px",
+            },
           }}
         >
           Sign Out
@@ -385,10 +342,8 @@ const HomePage = () => {
 
       {/* ═══ SUMMARY CARDS ═══ */}
       <CardsRow>
-        {/* Income Card */}
         <SummaryCard bgColor="#c8e6c9">
           <SummaryText>Income: RS {income.toFixed(2)}</SummaryText>
-
           {isEditingIncome ? (
             <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
               <TextField
@@ -433,12 +388,10 @@ const HomePage = () => {
           )}
         </SummaryCard>
 
-        {/* Remaining Card */}
         <SummaryCard bgColor="#c8e6c9">
           <SummaryText>Remaining: RS {remaining.toFixed(2)}</SummaryText>
         </SummaryCard>
 
-        {/* Spent Card */}
         <SummaryCard bgColor="#81d4fa">
           <SummaryText>Spent: RS {totalSpent.toFixed(2)}</SummaryText>
         </SummaryCard>
@@ -449,7 +402,15 @@ const HomePage = () => {
         <Typography
           variant="h5"
           component="h2"
-          sx={{ fontWeight: 700, color: "#1a1a1a", marginBottom: "16px" }}
+          sx={{
+            fontWeight: 700,
+            color: "#1a1a1a",
+            marginBottom: "16px",
+            // MOBILE: Center the heading
+            "@media (max-width: 600px)": {
+              textAlign: "center",
+            },
+          }}
         >
           History
         </Typography>
@@ -475,13 +436,7 @@ const HomePage = () => {
             filteredTransactions.map((transaction) => (
               <ExpenseItem key={transaction.id}>
                 <ExpenseName>{transaction.name}</ExpenseName>
-
                 <ItemRight>
-                  {/* 
-                    Badge color depends on type:
-                    - "income" → green (#4caf50)
-                    - "expense" → red (#ef5350)
-                  */}
                   <AmountBadge
                     badgeColor={
                       transaction.type === "income" ? "#4caf50" : "#ef5350"
@@ -489,7 +444,6 @@ const HomePage = () => {
                   >
                     Rs. {transaction.cost.toFixed(2)}
                   </AmountBadge>
-
                   <IconButton
                     size="small"
                     onClick={() => handleDelete(transaction.id)}
@@ -505,11 +459,7 @@ const HomePage = () => {
             ))
           ) : (
             <Typography
-              sx={{
-                textAlign: "center",
-                color: "#999999",
-                padding: "24px",
-              }}
+              sx={{ textAlign: "center", color: "#999999", padding: "24px" }}
             >
               No transactions found
             </Typography>
@@ -522,7 +472,15 @@ const HomePage = () => {
         <Typography
           variant="h5"
           component="h2"
-          sx={{ fontWeight: 700, color: "#1a1a1a", marginBottom: "16px" }}
+          sx={{
+            fontWeight: 700,
+            color: "#1a1a1a",
+            marginBottom: "16px",
+            // MOBILE: Center the heading
+            "@media (max-width: 600px)": {
+              textAlign: "center",
+            },
+          }}
         >
           Add Expence
         </Typography>
@@ -542,7 +500,6 @@ const HomePage = () => {
               error={formik.touched.name && Boolean(formik.errors.name)}
               helperText={formik.touched.name && formik.errors.name}
             />
-
             <StyledTextField
               fullWidth
               id="cost"
@@ -569,6 +526,10 @@ const HomePage = () => {
               borderRadius: "8px",
               padding: "8px 32px",
               "&:hover": { backgroundColor: "#0d6d8a" },
+              // MOBILE: Full width Save button
+              "@media (max-width: 600px)": {
+                width: "100%",
+              },
             }}
           >
             Save

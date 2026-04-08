@@ -1,7 +1,6 @@
 // ============================================================
 // FILE: src/pages/RegisterPage.jsx
-// PURPOSE: Register page — matching the reference image
-// UPDATED: onSubmit now navigates to /login
+// UPDATED: Mobile responsive — card disappears on small screens
 // ============================================================
 
 import React from "react";
@@ -24,7 +23,9 @@ const PageWrapper = styled.div`
   background-color: #d4d4d4;
 
   @media (max-width: 600px) {
-    padding: 16px;
+    background-color: #ffffff;
+    align-items: flex-start;
+    padding-top: 60px;
   }
 `;
 
@@ -38,7 +39,11 @@ const RegisterCard = styled.div`
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
 
   @media (max-width: 600px) {
-    padding: 32px 24px;
+    background-color: transparent;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    padding: 0 24px;
     max-width: 100%;
   }
 `;
@@ -81,8 +86,14 @@ const StyledTextField = styled(TextField)`
     }
 
     @media (max-width: 600px) {
+      background-color: #f0f0f0;
+
       .MuiOutlinedInput-root {
-        font-size: 0.9rem;
+        background-color: #f0f0f0;
+
+        fieldset {
+          border-color: #e0e0e0;
+        }
       }
     }
   }
@@ -108,19 +119,11 @@ const StyledButton = styled(Button)`
       background-color: #7ec4d9;
       color: #ffffff;
     }
-
-    @media (max-width: 600px) {
-      padding: 14px;
-    }
   }
 `;
 
 const BackLinkWrapper = styled.div`
   margin-top: 12px;
-
-  @media (max-width: 400px) {
-    text-align: left;
-  }
 `;
 
 // ─────────────────────────────────────────────────────────────
@@ -145,17 +148,8 @@ const RegisterPage = () => {
   const navigate = useNavigate();
 
   const formik = useFormik({
-    initialValues: {
-      email: "",
-      password: "",
-    },
+    initialValues: { email: "", password: "" },
     validationSchema: validationSchema,
-
-    // ── CHANGED: Navigate to login page instead of showing alert ──
-    // Before:  alert(`Registration attempt:\nEmail: ${values.email}`);
-    // After:   navigate("/login");
-    // Later when you add a backend, you'll first call your API
-    // to create the account, and only navigate on success.
     onSubmit: (values) => {
       console.log("Register submitted with:", values);
       navigate("/login");
@@ -210,11 +204,7 @@ const RegisterPage = () => {
             helperText={formik.touched.password && formik.errors.password}
           />
 
-          <StyledButton
-            type="submit"
-            variant="contained"
-            disableElevation
-          >
+          <StyledButton type="submit" variant="contained" disableElevation>
             Register
           </StyledButton>
 
@@ -222,18 +212,13 @@ const RegisterPage = () => {
             <Link
               href="/login"
               underline="none"
-              onClick={(e) => {
-                e.preventDefault();
-                navigate("/login");
-              }}
+              onClick={(e) => { e.preventDefault(); navigate("/login"); }}
               sx={{
                 color: "#333333",
                 fontSize: "0.85rem",
                 fontWeight: 500,
                 cursor: "pointer",
-                "&:hover": {
-                  textDecoration: "underline",
-                },
+                "&:hover": { textDecoration: "underline" },
               }}
             >
               Back

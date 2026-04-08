@@ -1,18 +1,9 @@
 // ============================================================
 // FILE: src/pages/ForgotPasswordPage.jsx
-// PURPOSE: Reset Password page — matching reference image
-// TECH: React + Material UI + styled-components + Formik + Yup
-//
-// THIS PAGE IS SIMPLER THAN LOGIN/REGISTER:
-// - Only ONE field (Email)
-// - One button (Send Password Reset Link)
-// - One link (Back → goes to Login)
+// UPDATED: Mobile responsive — card disappears on small screens
 // ============================================================
 
 import React, { useState } from "react";
-// ↑ NEW: We import useState here to show a success message
-//   after the user submits the form.
-
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import { Box, Typography, TextField, Button, Link } from "@mui/material";
@@ -21,9 +12,6 @@ import { useNavigate } from "react-router-dom";
 
 // ─────────────────────────────────────────────────────────────
 // STYLED COMPONENTS
-// Same pattern as Login and Register pages.
-// You'll notice these are reused — later you can move them
-// to a shared file like src/styles/AuthStyles.js
 // ─────────────────────────────────────────────────────────────
 
 const PageWrapper = styled.div`
@@ -35,7 +23,9 @@ const PageWrapper = styled.div`
   background-color: #d4d4d4;
 
   @media (max-width: 600px) {
-    padding: 16px;
+    background-color: #ffffff;
+    align-items: flex-start;
+    padding-top: 60px;
   }
 `;
 
@@ -49,7 +39,11 @@ const ResetCard = styled.div`
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
 
   @media (max-width: 600px) {
-    padding: 32px 24px;
+    background-color: transparent;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    padding: 0 24px;
     max-width: 100%;
   }
 `;
@@ -92,8 +86,14 @@ const StyledTextField = styled(TextField)`
     }
 
     @media (max-width: 600px) {
+      background-color: #f0f0f0;
+
       .MuiOutlinedInput-root {
-        font-size: 0.9rem;
+        background-color: #f0f0f0;
+
+        fieldset {
+          border-color: #e0e0e0;
+        }
       }
     }
   }
@@ -119,24 +119,13 @@ const StyledButton = styled(Button)`
       background-color: #7ec4d9;
       color: #ffffff;
     }
-
-    @media (max-width: 600px) {
-      padding: 14px;
-    }
   }
 `;
 
 const BackLinkWrapper = styled.div`
   margin-top: 12px;
-
-  @media (max-width: 400px) {
-    text-align: left;
-  }
 `;
 
-// ── Success message styled component ──
-// NEW CONCEPT: This only appears AFTER the form is submitted.
-// We use useState to toggle its visibility.
 const SuccessMessage = styled.div`
   background-color: #e8f5e9;
   color: #2e7d32;
@@ -149,7 +138,6 @@ const SuccessMessage = styled.div`
 
 // ─────────────────────────────────────────────────────────────
 // VALIDATION SCHEMA
-// Only email is needed — simpler than Login/Register
 // ─────────────────────────────────────────────────────────────
 
 const validationSchema = Yup.object({
@@ -160,31 +148,17 @@ const validationSchema = Yup.object({
 
 // ─────────────────────────────────────────────────────────────
 // THE FORGOT PASSWORD COMPONENT
-//
-// NEW CONCEPT: Success state
-// After the user submits, we show a green success message
-// instead of navigating away. This is common for "reset
-// password" flows — the user stays on the page and sees
-// confirmation that the email was sent.
 // ─────────────────────────────────────────────────────────────
 
 const ForgotPasswordPage = () => {
   const navigate = useNavigate();
-
-  // State to track if the form was submitted successfully
   const [submitted, setSubmitted] = useState(false);
 
   const formik = useFormik({
-    initialValues: {
-      email: "",
-    },
+    initialValues: { email: "" },
     validationSchema: validationSchema,
     onSubmit: (values) => {
       console.log("Password reset requested for:", values.email);
-
-      // Show success message
-      // In a real app, you'd call your backend API here to
-      // send the actual reset email, then show this message.
       setSubmitted(true);
     },
   });
@@ -192,7 +166,6 @@ const ForgotPasswordPage = () => {
   return (
     <PageWrapper>
       <ResetCard>
-        {/* ── HEADING ── */}
         <Typography
           variant="h4"
           component="h1"
@@ -207,15 +180,6 @@ const ForgotPasswordPage = () => {
           Reset Password
         </Typography>
 
-        {/* 
-          NEW CONCEPT: Conditional rendering with &&
-          
-          {submitted && <SuccessMessage>...</SuccessMessage>}
-          
-          This is a shorthand for: if submitted is true, show the message.
-          Unlike the ternary (condition ? a : b), the && operator
-          only shows something when true — nothing when false.
-        */}
         {submitted && (
           <SuccessMessage>
             Password reset link has been sent to your email!
@@ -223,7 +187,6 @@ const ForgotPasswordPage = () => {
         )}
 
         <Box component="form" onSubmit={formik.handleSubmit} noValidate>
-          {/* ── EMAIL FIELD ── */}
           <StyledTextField
             fullWidth
             id="email"
@@ -239,32 +202,21 @@ const ForgotPasswordPage = () => {
             helperText={formik.touched.email && formik.errors.email}
           />
 
-          {/* ── SUBMIT BUTTON ── */}
-          <StyledButton
-            type="submit"
-            variant="contained"
-            disableElevation
-          >
+          <StyledButton type="submit" variant="contained" disableElevation>
             Send Password Reset Link
           </StyledButton>
 
-          {/* ── BACK LINK ── */}
           <BackLinkWrapper>
             <Link
               href="/login"
               underline="none"
-              onClick={(e) => {
-                e.preventDefault();
-                navigate("/login");
-              }}
+              onClick={(e) => { e.preventDefault(); navigate("/login"); }}
               sx={{
                 color: "#333333",
                 fontSize: "0.85rem",
                 fontWeight: 500,
                 cursor: "pointer",
-                "&:hover": {
-                  textDecoration: "underline",
-                },
+                "&:hover": { textDecoration: "underline" },
               }}
             >
               Back
