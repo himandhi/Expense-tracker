@@ -1,8 +1,3 @@
-// ============================================================
-// FILE: src/pages/LoginPage.jsx
-// UPDATED: Mobile responsive — card disappears on small screens
-// ============================================================
-
 import React from "react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
@@ -10,9 +5,6 @@ import { Box, Typography, TextField, Button, Link } from "@mui/material";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
 
-// ─────────────────────────────────────────────────────────────
-// STYLED COMPONENTS
-// ─────────────────────────────────────────────────────────────
 
 const PageWrapper = styled.div`
   min-height: 100vh;
@@ -141,9 +133,6 @@ const LinksRow = styled.div`
   margin-top: 12px;
 `;
 
-// ─────────────────────────────────────────────────────────────
-// VALIDATION SCHEMA
-// ─────────────────────────────────────────────────────────────
 
 const validationSchema = Yup.object({
   email: Yup.string()
@@ -155,9 +144,6 @@ const validationSchema = Yup.object({
     .required("Password is required"),
 });
 
-// ─────────────────────────────────────────────────────────────
-// THE LOGIN COMPONENT
-// ─────────────────────────────────────────────────────────────
 
 const LoginPage = () => {
   const navigate = useNavigate();

@@ -1,8 +1,3 @@
-// ============================================================
-// FILE: src/pages/ForgotPasswordPage.jsx
-// UPDATED: Mobile responsive — card disappears on small screens
-// ============================================================
-
 import React, { useState } from "react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
@@ -10,9 +5,6 @@ import { Box, Typography, TextField, Button, Link } from "@mui/material";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
 
-// ─────────────────────────────────────────────────────────────
-// STYLED COMPONENTS
-// ─────────────────────────────────────────────────────────────
 
 const PageWrapper = styled.div`
   min-height: 100vh;
@@ -136,9 +128,6 @@ const SuccessMessage = styled.div`
   text-align: center;
 `;
 
-// ─────────────────────────────────────────────────────────────
-// VALIDATION SCHEMA
-// ─────────────────────────────────────────────────────────────
 
 const validationSchema = Yup.object({
   email: Yup.string()
@@ -146,9 +135,6 @@ const validationSchema = Yup.object({
     .required("Email is required"),
 });
 
-// ─────────────────────────────────────────────────────────────
-// THE FORGOT PASSWORD COMPONENT
-// ─────────────────────────────────────────────────────────────
 
 const ForgotPasswordPage = () => {
   const navigate = useNavigate();

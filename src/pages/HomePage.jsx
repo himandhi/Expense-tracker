@@ -1,13 +1,3 @@
-// ============================================================
-// FILE: src/pages/HomePage.jsx
-// UPDATED: Mobile responsive matching the mobile UI design
-//   - Title centered on mobile
-//   - Sign Out button full width on mobile
-//   - Cards stacked vertically
-//   - Form fields stacked vertically
-//   - History centered heading on mobile
-// ============================================================
-
 import React, { useState } from "react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
@@ -24,9 +14,6 @@ import SearchIcon from "@mui/icons-material/Search";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
 
-// ─────────────────────────────────────────────────────────────
-// STYLED COMPONENTS
-// ─────────────────────────────────────────────────────────────
 
 const PageWrapper = styled.div`
   min-height: 100vh;
@@ -39,7 +26,7 @@ const PageWrapper = styled.div`
   }
 `;
 
-// Header: side-by-side on desktop, stacked + centered on mobile
+
 const Header = styled.div`
   display: flex;
   justify-content: space-between;
@@ -54,7 +41,7 @@ const Header = styled.div`
   }
 `;
 
-// Cards: 3 columns on desktop, 1 column on mobile
+
 const CardsRow = styled.div`
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -149,7 +136,7 @@ const AddExpenseSection = styled.div`
   margin-top: 16px;
 `;
 
-// Form fields: side-by-side on desktop, stacked on mobile
+
 const FormRow = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -213,9 +200,6 @@ const SearchField = styled(TextField)`
   }
 `;
 
-// ─────────────────────────────────────────────────────────────
-// VALIDATION SCHEMA
-// ─────────────────────────────────────────────────────────────
 
 const expenseValidationSchema = Yup.object({
   name: Yup.string().trim().required("Name is required"),
@@ -225,9 +209,6 @@ const expenseValidationSchema = Yup.object({
     .required("Cost is required"),
 });
 
-// ─────────────────────────────────────────────────────────────
-// THE HOME PAGE COMPONENT
-// ─────────────────────────────────────────────────────────────
 
 const HomePage = () => {
   const navigate = useNavigate();
@@ -308,7 +289,7 @@ const HomePage = () => {
 
   return (
     <PageWrapper>
-      {/* ═══ HEADER ═══ */}
+      
       <Header>
         <Typography
           variant="h4"
@@ -329,7 +310,7 @@ const HomePage = () => {
             borderRadius: "20px",
             padding: "8px 24px",
             "&:hover": { backgroundColor: "#d32f2f" },
-            // MOBILE: Full width button
+            
             "@media (max-width: 600px)": {
               width: "100%",
               borderRadius: "8px",
@@ -340,7 +321,7 @@ const HomePage = () => {
         </Button>
       </Header>
 
-      {/* ═══ SUMMARY CARDS ═══ */}
+      
       <CardsRow>
         <SummaryCard bgColor="#c8e6c9">
           <SummaryText>Income: RS {income.toFixed(2)}</SummaryText>
@@ -397,7 +378,7 @@ const HomePage = () => {
         </SummaryCard>
       </CardsRow>
 
-      {/* ═══ HISTORY SECTION ═══ */}
+      
       <HistorySection>
         <Typography
           variant="h5"
@@ -406,7 +387,7 @@ const HomePage = () => {
             fontWeight: 700,
             color: "#1a1a1a",
             marginBottom: "16px",
-            // MOBILE: Center the heading
+            
             "@media (max-width: 600px)": {
               textAlign: "center",
             },
@@ -467,7 +448,7 @@ const HomePage = () => {
         </Box>
       </HistorySection>
 
-      {/* ═══ ADD EXPENSE SECTION ═══ */}
+      
       <AddExpenseSection>
         <Typography
           variant="h5"
@@ -476,7 +457,7 @@ const HomePage = () => {
             fontWeight: 700,
             color: "#1a1a1a",
             marginBottom: "16px",
-            // MOBILE: Center the heading
+            
             "@media (max-width: 600px)": {
               textAlign: "center",
             },
@@ -526,7 +507,7 @@ const HomePage = () => {
               borderRadius: "8px",
               padding: "8px 32px",
               "&:hover": { backgroundColor: "#0d6d8a" },
-              // MOBILE: Full width Save button
+              
               "@media (max-width: 600px)": {
                 width: "100%",
               },
