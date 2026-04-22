@@ -1,10 +1,20 @@
-import React from "react";
+// ============================================================
+// FILE: src/pages/LoginPage/LoginPage.jsx
+// UPDATED: Now calls backend API for login
+//          Stores userId in localStorage on success
+// ============================================================
+
+import React, { useState } from "react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import { Box, Typography, TextField, Button, Link } from "@mui/material";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
+import { loginUser } from "../../services/api";
 
+// ─────────────────────────────────────────────────────────────
+// STYLED COMPONENTS (unchanged)
+// ─────────────────────────────────────────────────────────────
 
 const PageWrapper = styled.div`
   min-height: 100vh;
@@ -14,10 +24,6 @@ const PageWrapper = styled.div`
   align-items: center;
   background-color: #d4d4d4;
 
-  /*
-    MOBILE FIX: On small screens, remove the grey background
-    and let content fill the full white screen.
-  */
   @media (max-width: 600px) {
     background-color: #ffffff;
     align-items: flex-start;
@@ -34,10 +40,6 @@ const LoginCard = styled.div`
   border-radius: 12px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
 
-  /*
-    MOBILE FIX: Remove card styling — no background, no border,
-    no shadow, no border-radius. Content sits directly on white bg.
-  */
   @media (max-width: 600px) {
     background-color: transparent;
     border: none;
@@ -57,47 +59,20 @@ const StyledTextField = styled(TextField)`
     .MuiOutlinedInput-root {
       background-color: #ffffff;
       border-radius: 8px;
-
-      fieldset {
-        border-color: #cccccc;
-      }
-
-      &:hover fieldset {
-        border-color: #1a8fb5;
-      }
-
-      &.Mui-focused fieldset {
-        border-color: #1a8fb5;
-        border-width: 2px;
-      }
+      fieldset { border-color: #cccccc; }
+      &:hover fieldset { border-color: #1a8fb5; }
+      &.Mui-focused fieldset { border-color: #1a8fb5; border-width: 2px; }
     }
 
-    .MuiInputLabel-root {
-      color: #333333;
-      font-size: 0.95rem;
-    }
+    .MuiInputLabel-root { color: #333333; font-size: 0.95rem; }
+    .MuiInputLabel-root.Mui-focused { color: #333333; }
+    .MuiOutlinedInput-input { color: #000000; }
 
-    .MuiInputLabel-root.Mui-focused {
-      color: #333333;
-    }
-
-    .MuiOutlinedInput-input {
-      color: #000000;
-    }
-
-    /*
-      MOBILE FIX: Light grey background on inputs to match
-      the mobile design images.
-    */
     @media (max-width: 600px) {
       background-color: #f0f0f0;
-
       .MuiOutlinedInput-root {
         background-color: #f0f0f0;
-
-        fieldset {
-          border-color: #e0e0e0;
-        }
+        fieldset { border-color: #e0e0e0; }
       }
     }
   }
@@ -114,15 +89,8 @@ const StyledButton = styled(Button)`
     text-transform: none;
     border-radius: 8px;
     margin-top: 12px;
-
-    &:hover {
-      background-color: #0d6d8a;
-    }
-
-    &:disabled {
-      background-color: #7ec4d9;
-      color: #ffffff;
-    }
+    &:hover { background-color: #0d6d8a; }
+    &:disabled { background-color: #7ec4d9; color: #ffffff; }
   }
 `;
 
@@ -133,27 +101,63 @@ const LinksRow = styled.div`
   margin-top: 12px;
 `;
 
+// Error message styled component
+const ErrorMessage = styled.div`
+  background-color: #ffebee;
+  color: #c62828;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  margin-bottom: 16px;
+  text-align: center;
+`;
+
+// ─────────────────────────────────────────────────────────────
+// VALIDATION
+// ─────────────────────────────────────────────────────────────
 
 const validationSchema = Yup.object({
   email: Yup.string()
     .email("Please enter a valid email address")
     .required("Email is required"),
-
   password: Yup.string()
     .min(6, "Password must be at least 6 characters")
     .required("Password is required"),
 });
 
+// ─────────────────────────────────────────────────────────────
+// THE LOGIN COMPONENT
+// ─────────────────────────────────────────────────────────────
 
 const LoginPage = () => {
   const navigate = useNavigate();
 
+  // NEW: State for API error messages
+  const [error, setError] = useState("");
+
   const formik = useFormik({
     initialValues: { email: "", password: "" },
     validationSchema: validationSchema,
-    onSubmit: (values) => {
-      console.log("Login submitted with:", values);
-      navigate("/home");
+
+    // CHANGED: Now calls backend API instead of just navigating
+    onSubmit: async (values) => {
+      try {
+        setError("");
+        const response = await loginUser(values.email, values.password);
+
+        // Store userId and email in localStorage
+        // So HomePage knows who's logged in
+        localStorage.setItem("userId", response.data.userId);
+        localStorage.setItem("userEmail", response.data.email);
+
+        // Navigate to home
+        navigate("/home");
+      } catch (err) {
+        // Show error message from backend
+        const message =
+          err.response?.data?.message || "Login failed. Please try again.";
+        setError(message);
+      }
     },
   });
 
@@ -174,15 +178,13 @@ const LoginPage = () => {
           Login
         </Typography>
 
+        {/* Show error if login fails */}
+        {error && <ErrorMessage>{error}</ErrorMessage>}
+
         <Box component="form" onSubmit={formik.handleSubmit} noValidate>
           <StyledTextField
-            fullWidth
-            id="email"
-            name="email"
-            label="Email"
-            type="email"
-            variant="outlined"
-            size="small"
+            fullWidth id="email" name="email" label="Email"
+            type="email" variant="outlined" size="small"
             value={formik.values.email}
             onChange={formik.handleChange}
             onBlur={formik.handleBlur}
@@ -191,13 +193,8 @@ const LoginPage = () => {
           />
 
           <StyledTextField
-            fullWidth
-            id="password"
-            name="password"
-            label="Password"
-            type="password"
-            variant="outlined"
-            size="small"
+            fullWidth id="password" name="password" label="Password"
+            type="password" variant="outlined" size="small"
             value={formik.values.password}
             onChange={formik.handleChange}
             onBlur={formik.handleBlur}
@@ -211,31 +208,16 @@ const LoginPage = () => {
 
           <LinksRow>
             <Link
-              href="/register"
-              underline="none"
+              href="/register" underline="none"
               onClick={(e) => { e.preventDefault(); navigate("/register"); }}
-              sx={{
-                color: "#333333",
-                fontSize: "0.85rem",
-                fontWeight: 500,
-                cursor: "pointer",
-                "&:hover": { textDecoration: "underline" },
-              }}
+              sx={{ color: "#333333", fontSize: "0.85rem", fontWeight: 500, cursor: "pointer", "&:hover": { textDecoration: "underline" } }}
             >
               Create Account
             </Link>
-
             <Link
-              href="/forgot-password"
-              underline="none"
+              href="/forgot-password" underline="none"
               onClick={(e) => { e.preventDefault(); navigate("/forgot-password"); }}
-              sx={{
-                color: "#333333",
-                fontSize: "0.85rem",
-                fontWeight: 400,
-                cursor: "pointer",
-                "&:hover": { textDecoration: "underline" },
-              }}
+              sx={{ color: "#333333", fontSize: "0.85rem", fontWeight: 400, cursor: "pointer", "&:hover": { textDecoration: "underline" } }}
             >
               Forgot password
             </Link>

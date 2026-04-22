@@ -1,19 +1,45 @@
-import React, { useState } from "react";
-import { useFormik } from "formik";
-import * as Yup from "yup";
-import {
-  Box,
-  Typography,
-  TextField,
-  Button,
-  IconButton,
-  InputAdornment,
-} from "@mui/material";
-import DeleteIcon from "@mui/icons-material/Delete";
-import SearchIcon from "@mui/icons-material/Search";
+// ============================================================
+// FILE: src/pages/HomePage/HomePage.jsx
+// PURPOSE: Home page — NOW slim! Uses components + backend APIs
+//
+// WHAT CHANGED:
+// 1. SummaryCards, TransactionHistory, AddExpense are now
+//    separate components imported from src/components/
+// 2. Data comes from the backend API (not hardcoded useState)
+// 3. useEffect fetches data when the page loads
+//
+// NEW CONCEPTS:
+// - useEffect: Runs code when the component first appears
+// - API calls: Fetching/sending data to the backend
+// - localStorage: Stores userId so we know who's logged in
+// ============================================================
+
+import React, { useState, useEffect } from "react";
+// ↑ useEffect: A React hook that runs code AFTER the component
+//   renders. We use it to fetch data from the backend when
+//   the page first loads.
+
+import { Typography, Button } from "@mui/material";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
 
+// ── Import our 3 components ──
+import SummaryCards from "../../components/SummaryCards/SummaryCards";
+import TransactionHistory from "../../components/TransactionHistory/TransactionHistory";
+import AddExpense from "../../components/AddExpense/AddExpense";
+
+// ── Import API functions ──
+import {
+  getExpenses,
+  addExpense,
+  deleteExpense,
+  getIncome,
+  setIncome as setIncomeAPI,
+} from "../../services/api";
+
+// ─────────────────────────────────────────────────────────────
+// STYLED COMPONENTS (only the ones HomePage needs directly)
+// ─────────────────────────────────────────────────────────────
 
 const PageWrapper = styled.div`
   min-height: 100vh;
@@ -25,7 +51,6 @@ const PageWrapper = styled.div`
     padding: 16px;
   }
 `;
-
 
 const Header = styled.div`
   display: flex;
@@ -41,255 +66,162 @@ const Header = styled.div`
   }
 `;
 
-
-const CardsRow = styled.div`
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
-  margin-bottom: 32px;
-
-  @media (max-width: 900px) {
-    grid-template-columns: 1fr;
-  }
-`;
-
-const SummaryCard = styled.div`
-  background-color: ${(props) => props.bgColor || "#e0e0e0"};
-  padding: 24px;
-  border-radius: 8px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  min-height: 60px;
-
-  @media (max-width: 600px) {
-    padding: 16px;
-  }
-`;
-
-const SummaryText = styled.span`
-  color: #333333;
-  font-size: 1rem;
-  font-weight: 600;
-
-  @media (max-width: 600px) {
-    font-size: 0.9rem;
-  }
-`;
-
-const HistorySection = styled.div`
-  margin-bottom: 32px;
-`;
-
-const ExpenseItem = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 16px;
-  border: 1px solid #e0e0e0;
-  border-bottom: none;
-
-  &:last-child {
-    border-bottom: 1px solid #e0e0e0;
-  }
-
-  &:hover {
-    background-color: #f9f9f9;
-  }
-
-  @media (max-width: 600px) {
-    padding: 10px 12px;
-  }
-`;
-
-const ExpenseName = styled.span`
-  font-size: 0.95rem;
-  color: #333333;
-
-  @media (max-width: 600px) {
-    font-size: 0.85rem;
-  }
-`;
-
-const AmountBadge = styled.span`
-  background-color: ${(props) => props.badgeColor || "#ef5350"};
-  color: #ffffff;
-  padding: 4px 14px;
-  border-radius: 4px;
-  font-size: 0.85rem;
-  font-weight: 500;
-  white-space: nowrap;
-
-  @media (max-width: 600px) {
-    font-size: 0.75rem;
-    padding: 3px 10px;
-  }
-`;
-
-const ItemRight = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-`;
-
-const AddExpenseSection = styled.div`
-  margin-top: 16px;
-`;
-
-
-const FormRow = styled.div`
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-  margin-bottom: 16px;
-
-  @media (max-width: 600px) {
-    grid-template-columns: 1fr;
-  }
-`;
-
-const StyledTextField = styled(TextField)`
-  && {
-    .MuiOutlinedInput-root {
-      border-radius: 8px;
-
-      fieldset {
-        border-color: #cccccc;
-      }
-
-      &:hover fieldset {
-        border-color: #1a8fb5;
-      }
-
-      &.Mui-focused fieldset {
-        border-color: #1a8fb5;
-        border-width: 2px;
-      }
-    }
-
-    .MuiInputLabel-root {
-      color: #333333;
-    }
-
-    .MuiInputLabel-root.Mui-focused {
-      color: #333333;
-    }
-  }
-`;
-
-const SearchField = styled(TextField)`
-  && {
-    margin-bottom: 16px;
-
-    .MuiOutlinedInput-root {
-      border-radius: 8px;
-
-      fieldset {
-        border-color: #cccccc;
-      }
-
-      &:hover fieldset {
-        border-color: #999999;
-      }
-
-      &.Mui-focused fieldset {
-        border-color: #333333;
-        border-width: 2px;
-      }
-    }
-  }
-`;
-
-
-const expenseValidationSchema = Yup.object({
-  name: Yup.string().trim().required("Name is required"),
-  cost: Yup.number()
-    .typeError("Cost must be a number")
-    .positive("Cost must be greater than 0")
-    .required("Cost is required"),
-});
-
+// ─────────────────────────────────────────────────────────────
+// THE HOME PAGE COMPONENT
+// ─────────────────────────────────────────────────────────────
 
 const HomePage = () => {
   const navigate = useNavigate();
 
+  // ── Get userId from localStorage ──
+  // When the user logs in, we store their userId in localStorage.
+  // localStorage persists even when the page refreshes.
+  const userId = localStorage.getItem("userId");
+
+  // If no userId, user isn't logged in — redirect to login
+  useEffect(() => {
+    if (!userId) {
+      navigate("/login");
+    }
+  }, [userId, navigate]);
+
+  // ── STATE ──
   const [income, setIncome] = useState(0);
   const [isEditingIncome, setIsEditingIncome] = useState(false);
   const [incomeInput, setIncomeInput] = useState("");
-
-  const [transactions, setTransactions] = useState([
-    { id: 1, name: "Shopping", cost: 500.0, type: "expense" },
-    { id: 2, name: "Holiday", cost: 500.0, type: "expense" },
-    { id: 3, name: "Transportation", cost: 500.0, type: "expense" },
-    { id: 4, name: "Fuel", cost: 500.0, type: "expense" },
-    { id: 5, name: "Income", cost: 0, type: "income" },
-  ]);
-
+  const [expenses, setExpenses] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [loading, setLoading] = useState(true);
 
-  const totalSpent = transactions
-    .filter((t) => t.type === "expense")
-    .reduce((sum, t) => sum + t.cost, 0);
+  // ── FETCH DATA ON PAGE LOAD ──
+  // useEffect with [] runs ONCE when the component first appears.
+  // It calls the backend to get expenses and income.
+  useEffect(() => {
+    if (!userId) return;
 
+    const fetchData = async () => {
+      try {
+        // Call both APIs at the same time using Promise.all
+        // This is faster than calling them one after another
+        const [expensesRes, incomeRes] = await Promise.all([
+          getExpenses(userId),
+          getIncome(userId),
+        ]);
+
+        setExpenses(expensesRes.data);
+
+        if (incomeRes.data) {
+          setIncome(Number(incomeRes.data.amount));
+        }
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [userId]);
+
+  // ── CALCULATIONS ──
+  const totalSpent = expenses.reduce(
+    (sum, expense) => sum + Number(expense.cost),
+    0
+  );
   const remaining = income - totalSpent;
 
+  // ── BUILD TRANSACTION LIST (expenses + income for history) ──
+  const transactions = [
+    ...expenses.map((e) => ({
+      id: e.id,
+      name: e.name,
+      cost: Number(e.cost),
+      type: "expense",
+    })),
+    { id: "income", name: "Income", cost: income, type: "income" },
+  ];
+
+  // Filter transactions by search term
   const filteredTransactions = transactions.filter((t) =>
     t.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleDelete = (id) => {
-    const transaction = transactions.find((t) => t.id === id);
-    if (transaction && transaction.type === "income") {
-      setIncome(0);
-    }
-    setTransactions(transactions.filter((t) => t.id !== id));
-  };
+  // ── HANDLERS ──
 
+  // Handle income edit
   const handleEditIncome = () => {
     setIncomeInput(income.toString());
     setIsEditingIncome(true);
   };
 
-  const handleSaveIncome = () => {
+  // Handle income save — calls backend API
+  const handleSaveIncome = async () => {
     const newIncome = parseFloat(incomeInput);
     if (!isNaN(newIncome) && newIncome >= 0) {
-      setIncome(newIncome);
-      setIsEditingIncome(false);
-
-      const incomeExists = transactions.some((t) => t.type === "income");
-      if (incomeExists) {
-        setTransactions(
-          transactions.map((t) =>
-            t.type === "income" ? { ...t, cost: newIncome } : t
-          )
-        );
-      } else {
-        setTransactions([
-          ...transactions,
-          { id: Date.now(), name: "Income", cost: newIncome, type: "income" },
-        ]);
+      try {
+        await setIncomeAPI(userId, newIncome);
+        setIncome(newIncome);
+        setIsEditingIncome(false);
+      } catch (error) {
+        console.error("Error saving income:", error);
       }
     }
   };
 
-  const formik = useFormik({
-    initialValues: { name: "", cost: "" },
-    validationSchema: expenseValidationSchema,
-    onSubmit: (values, { resetForm }) => {
-      const newTransaction = {
-        id: Date.now(),
-        name: values.name.trim(),
-        cost: parseFloat(values.cost),
-        type: "expense",
-      };
-      setTransactions([...transactions, newTransaction]);
-      resetForm();
-    },
-  });
+  // Handle add expense — calls backend API
+  const handleAddExpense = async (name, cost) => {
+    try {
+      const response = await addExpense(userId, name, cost);
+      // Add the new expense returned from the backend to our list
+      setExpenses([...expenses, response.data]);
+    } catch (error) {
+      console.error("Error adding expense:", error);
+    }
+  };
 
+  // Handle delete — calls backend API
+  const handleDelete = async (id, type) => {
+    if (type === "income") {
+      // Reset income to 0
+      try {
+        await setIncomeAPI(userId, 0);
+        setIncome(0);
+      } catch (error) {
+        console.error("Error resetting income:", error);
+      }
+      return;
+    }
+
+    try {
+      await deleteExpense(id, userId);
+      setExpenses(expenses.filter((e) => e.id !== id));
+    } catch (error) {
+      console.error("Error deleting expense:", error);
+    }
+  };
+
+  // Handle sign out
+  const handleSignOut = () => {
+    localStorage.removeItem("userId");
+    localStorage.removeItem("userEmail");
+    navigate("/login");
+  };
+
+  // Show loading while fetching data
+  if (loading) {
+    return (
+      <PageWrapper>
+        <Typography sx={{ textAlign: "center", marginTop: "40px" }}>
+          Loading...
+        </Typography>
+      </PageWrapper>
+    );
+  }
+
+  // ── JSX — Notice how clean this is now! ──
   return (
     <PageWrapper>
-      
+      {/* ═══ HEADER ═══ */}
       <Header>
         <Typography
           variant="h4"
@@ -301,7 +233,7 @@ const HomePage = () => {
 
         <Button
           variant="contained"
-          onClick={() => navigate("/login")}
+          onClick={handleSignOut}
           sx={{
             backgroundColor: "#ef5350",
             color: "#ffffff",
@@ -310,7 +242,6 @@ const HomePage = () => {
             borderRadius: "20px",
             padding: "8px 24px",
             "&:hover": { backgroundColor: "#d32f2f" },
-            
             "@media (max-width: 600px)": {
               width: "100%",
               borderRadius: "8px",
@@ -321,202 +252,28 @@ const HomePage = () => {
         </Button>
       </Header>
 
-      
-      <CardsRow>
-        <SummaryCard bgColor="#c8e6c9">
-          <SummaryText>Income: RS {income.toFixed(2)}</SummaryText>
-          {isEditingIncome ? (
-            <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
-              <TextField
-                size="small"
-                value={incomeInput}
-                onChange={(e) => setIncomeInput(e.target.value)}
-                sx={{
-                  width: "120px",
-                  backgroundColor: "#ffffff",
-                  borderRadius: "4px",
-                }}
-              />
-              <Button
-                variant="contained"
-                size="small"
-                onClick={handleSaveIncome}
-                sx={{
-                  backgroundColor: "#4caf50",
-                  textTransform: "none",
-                  "&:hover": { backgroundColor: "#388e3c" },
-                }}
-              >
-                Save
-              </Button>
-            </Box>
-          ) : (
-            <Button
-              variant="contained"
-              size="small"
-              onClick={handleEditIncome}
-              sx={{
-                backgroundColor: "#3f51b5",
-                color: "#ffffff",
-                textTransform: "none",
-                borderRadius: "4px",
-                fontWeight: 600,
-                "&:hover": { backgroundColor: "#303f9f" },
-              }}
-            >
-              Edit
-            </Button>
-          )}
-        </SummaryCard>
+      {/* ═══ SUMMARY CARDS (Component) ═══ */}
+      <SummaryCards
+        income={income}
+        remaining={remaining}
+        totalSpent={totalSpent}
+        isEditingIncome={isEditingIncome}
+        incomeInput={incomeInput}
+        setIncomeInput={setIncomeInput}
+        handleEditIncome={handleEditIncome}
+        handleSaveIncome={handleSaveIncome}
+      />
 
-        <SummaryCard bgColor="#c8e6c9">
-          <SummaryText>Remaining: RS {remaining.toFixed(2)}</SummaryText>
-        </SummaryCard>
+      {/* ═══ TRANSACTION HISTORY (Component) ═══ */}
+      <TransactionHistory
+        transactions={filteredTransactions}
+        searchTerm={searchTerm}
+        setSearchTerm={setSearchTerm}
+        handleDelete={handleDelete}
+      />
 
-        <SummaryCard bgColor="#81d4fa">
-          <SummaryText>Spent: RS {totalSpent.toFixed(2)}</SummaryText>
-        </SummaryCard>
-      </CardsRow>
-
-      
-      <HistorySection>
-        <Typography
-          variant="h5"
-          component="h2"
-          sx={{
-            fontWeight: 700,
-            color: "#1a1a1a",
-            marginBottom: "16px",
-            
-            "@media (max-width: 600px)": {
-              textAlign: "center",
-            },
-          }}
-        >
-          History
-        </Typography>
-
-        <SearchField
-          fullWidth
-          placeholder="Type to search ..."
-          variant="outlined"
-          size="small"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon sx={{ color: "#999999" }} />
-              </InputAdornment>
-            ),
-          }}
-        />
-
-        <Box>
-          {filteredTransactions.length > 0 ? (
-            filteredTransactions.map((transaction) => (
-              <ExpenseItem key={transaction.id}>
-                <ExpenseName>{transaction.name}</ExpenseName>
-                <ItemRight>
-                  <AmountBadge
-                    badgeColor={
-                      transaction.type === "income" ? "#4caf50" : "#ef5350"
-                    }
-                  >
-                    Rs. {transaction.cost.toFixed(2)}
-                  </AmountBadge>
-                  <IconButton
-                    size="small"
-                    onClick={() => handleDelete(transaction.id)}
-                    sx={{
-                      color: "#666666",
-                      "&:hover": { color: "#d32f2f" },
-                    }}
-                  >
-                    <DeleteIcon fontSize="small" />
-                  </IconButton>
-                </ItemRight>
-              </ExpenseItem>
-            ))
-          ) : (
-            <Typography
-              sx={{ textAlign: "center", color: "#999999", padding: "24px" }}
-            >
-              No transactions found
-            </Typography>
-          )}
-        </Box>
-      </HistorySection>
-
-      
-      <AddExpenseSection>
-        <Typography
-          variant="h5"
-          component="h2"
-          sx={{
-            fontWeight: 700,
-            color: "#1a1a1a",
-            marginBottom: "16px",
-            
-            "@media (max-width: 600px)": {
-              textAlign: "center",
-            },
-          }}
-        >
-          Add Expence
-        </Typography>
-
-        <Box component="form" onSubmit={formik.handleSubmit} noValidate>
-          <FormRow>
-            <StyledTextField
-              fullWidth
-              id="name"
-              name="name"
-              label="Name"
-              variant="outlined"
-              size="small"
-              value={formik.values.name}
-              onChange={formik.handleChange}
-              onBlur={formik.handleBlur}
-              error={formik.touched.name && Boolean(formik.errors.name)}
-              helperText={formik.touched.name && formik.errors.name}
-            />
-            <StyledTextField
-              fullWidth
-              id="cost"
-              name="cost"
-              label="Cost"
-              variant="outlined"
-              size="small"
-              value={formik.values.cost}
-              onChange={formik.handleChange}
-              onBlur={formik.handleBlur}
-              error={formik.touched.cost && Boolean(formik.errors.cost)}
-              helperText={formik.touched.cost && formik.errors.cost}
-            />
-          </FormRow>
-
-          <Button
-            type="submit"
-            variant="contained"
-            sx={{
-              backgroundColor: "#1a8fb5",
-              color: "#ffffff",
-              fontWeight: 600,
-              textTransform: "none",
-              borderRadius: "8px",
-              padding: "8px 32px",
-              "&:hover": { backgroundColor: "#0d6d8a" },
-              
-              "@media (max-width: 600px)": {
-                width: "100%",
-              },
-            }}
-          >
-            Save
-          </Button>
-        </Box>
-      </AddExpenseSection>
+      {/* ═══ ADD EXPENSE (Component) ═══ */}
+      <AddExpense onAddExpense={handleAddExpense} />
     </PageWrapper>
   );
 };

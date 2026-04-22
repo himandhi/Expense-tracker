@@ -1,10 +1,19 @@
-import React from "react";
+// ============================================================
+// FILE: src/pages/RegisterPage/RegisterPage.jsx
+// UPDATED: Now calls backend API for registration
+// ============================================================
+
+import React, { useState } from "react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import { Box, Typography, TextField, Button, Link } from "@mui/material";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
+import { registerUser } from "../../services/api";
 
+// ─────────────────────────────────────────────────────────────
+// STYLED COMPONENTS (unchanged)
+// ─────────────────────────────────────────────────────────────
 
 const PageWrapper = styled.div`
   min-height: 100vh;
@@ -49,43 +58,20 @@ const StyledTextField = styled(TextField)`
     .MuiOutlinedInput-root {
       background-color: #ffffff;
       border-radius: 8px;
-
-      fieldset {
-        border-color: #cccccc;
-      }
-
-      &:hover fieldset {
-        border-color: #1a8fb5;
-      }
-
-      &.Mui-focused fieldset {
-        border-color: #1a8fb5;
-        border-width: 2px;
-      }
+      fieldset { border-color: #cccccc; }
+      &:hover fieldset { border-color: #1a8fb5; }
+      &.Mui-focused fieldset { border-color: #1a8fb5; border-width: 2px; }
     }
 
-    .MuiInputLabel-root {
-      color: #333333;
-      font-size: 0.95rem;
-    }
-
-    .MuiInputLabel-root.Mui-focused {
-      color: #333333;
-    }
-
-    .MuiOutlinedInput-input {
-      color: #000000;
-    }
+    .MuiInputLabel-root { color: #333333; font-size: 0.95rem; }
+    .MuiInputLabel-root.Mui-focused { color: #333333; }
+    .MuiOutlinedInput-input { color: #000000; }
 
     @media (max-width: 600px) {
       background-color: #f0f0f0;
-
       .MuiOutlinedInput-root {
         background-color: #f0f0f0;
-
-        fieldset {
-          border-color: #e0e0e0;
-        }
+        fieldset { border-color: #e0e0e0; }
       }
     }
   }
@@ -102,15 +88,8 @@ const StyledButton = styled(Button)`
     text-transform: none;
     border-radius: 8px;
     margin-top: 12px;
-
-    &:hover {
-      background-color: #0d6d8a;
-    }
-
-    &:disabled {
-      background-color: #7ec4d9;
-      color: #ffffff;
-    }
+    &:hover { background-color: #0d6d8a; }
+    &:disabled { background-color: #7ec4d9; color: #ffffff; }
   }
 `;
 
@@ -118,27 +97,69 @@ const BackLinkWrapper = styled.div`
   margin-top: 12px;
 `;
 
+const ErrorMessage = styled.div`
+  background-color: #ffebee;
+  color: #c62828;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  margin-bottom: 16px;
+  text-align: center;
+`;
+
+const SuccessMessage = styled.div`
+  background-color: #e8f5e9;
+  color: #2e7d32;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  margin-bottom: 16px;
+  text-align: center;
+`;
+
+// ─────────────────────────────────────────────────────────────
+// VALIDATION
+// ─────────────────────────────────────────────────────────────
 
 const validationSchema = Yup.object({
   email: Yup.string()
     .email("Please enter a valid email address")
     .required("Email is required"),
-
   password: Yup.string()
     .min(6, "Password must be at least 6 characters")
     .required("Password is required"),
 });
 
+// ─────────────────────────────────────────────────────────────
+// THE REGISTER COMPONENT
+// ─────────────────────────────────────────────────────────────
 
 const RegisterPage = () => {
   const navigate = useNavigate();
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
   const formik = useFormik({
     initialValues: { email: "", password: "" },
     validationSchema: validationSchema,
-    onSubmit: (values) => {
-      console.log("Register submitted with:", values);
-      navigate("/login");
+
+    // CHANGED: Now calls backend API
+    onSubmit: async (values) => {
+      try {
+        setError("");
+        setSuccess("");
+        await registerUser(values.email, values.password);
+
+        // Show success message, then redirect to login after 2 seconds
+        setSuccess("Registration successful! Redirecting to login...");
+        setTimeout(() => {
+          navigate("/login");
+        }, 2000);
+      } catch (err) {
+        const message =
+          err.response?.data?.message || "Registration failed. Please try again.";
+        setError(message);
+      }
     },
   });
 
@@ -159,15 +180,13 @@ const RegisterPage = () => {
           Register
         </Typography>
 
+        {error && <ErrorMessage>{error}</ErrorMessage>}
+        {success && <SuccessMessage>{success}</SuccessMessage>}
+
         <Box component="form" onSubmit={formik.handleSubmit} noValidate>
           <StyledTextField
-            fullWidth
-            id="email"
-            name="email"
-            label="Email"
-            type="email"
-            variant="outlined"
-            size="small"
+            fullWidth id="email" name="email" label="Email"
+            type="email" variant="outlined" size="small"
             value={formik.values.email}
             onChange={formik.handleChange}
             onBlur={formik.handleBlur}
@@ -176,13 +195,8 @@ const RegisterPage = () => {
           />
 
           <StyledTextField
-            fullWidth
-            id="password"
-            name="password"
-            label="Password"
-            type="password"
-            variant="outlined"
-            size="small"
+            fullWidth id="password" name="password" label="Password"
+            type="password" variant="outlined" size="small"
             value={formik.values.password}
             onChange={formik.handleChange}
             onBlur={formik.handleBlur}
@@ -196,16 +210,9 @@ const RegisterPage = () => {
 
           <BackLinkWrapper>
             <Link
-              href="/login"
-              underline="none"
+              href="/login" underline="none"
               onClick={(e) => { e.preventDefault(); navigate("/login"); }}
-              sx={{
-                color: "#333333",
-                fontSize: "0.85rem",
-                fontWeight: 500,
-                cursor: "pointer",
-                "&:hover": { textDecoration: "underline" },
-              }}
+              sx={{ color: "#333333", fontSize: "0.85rem", fontWeight: 500, cursor: "pointer", "&:hover": { textDecoration: "underline" } }}
             >
               Back
             </Link>
