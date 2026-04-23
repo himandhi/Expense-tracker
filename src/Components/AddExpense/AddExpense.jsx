@@ -1,19 +1,8 @@
-// ============================================================
-// FILE: src/components/AddExpense/AddExpense.jsx
-// UPDATED: Prevents adding expenses when remaining balance is 0
-//          Shows warning when balance is low
-//          Validates cost doesn't exceed remaining balance
-// ============================================================
-
 import React from "react";
 import { Box, Typography, TextField, Button } from "@mui/material";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import styled from "styled-components";
-
-// ─────────────────────────────────────────────────────────────
-// STYLED COMPONENTS
-// ─────────────────────────────────────────────────────────────
 
 const AddExpenseSection = styled.div`
   margin-top: 16px;
@@ -43,7 +32,6 @@ const StyledTextField = styled(TextField)`
   }
 `;
 
-// Warning message when balance is 0
 const WarningMessage = styled.div`
   background-color: #fff3e0;
   color: #e65100;
@@ -54,20 +42,9 @@ const WarningMessage = styled.div`
   text-align: center;
 `;
 
-// ─────────────────────────────────────────────────────────────
-// THE COMPONENT
-//
-// NEW PROP: remaining
-// The parent (HomePage) passes the remaining balance so we can:
-// 1. Disable the form when remaining <= 0
-// 2. Validate that cost doesn't exceed remaining
-// ─────────────────────────────────────────────────────────────
-
 const AddExpense = ({ onAddExpense, remaining }) => {
-  // Check if user can add expenses
   const canAddExpense = remaining > 0;
 
-  // Dynamic validation — cost can't exceed remaining balance
   const expenseValidationSchema = Yup.object({
     name: Yup.string().trim().required("Name is required"),
     cost: Yup.number()
@@ -80,7 +57,6 @@ const AddExpense = ({ onAddExpense, remaining }) => {
   const formik = useFormik({
     initialValues: { name: "", cost: "" },
     validationSchema: expenseValidationSchema,
-    // Need to enable reinitialize so validation updates when remaining changes
     enableReinitialize: true,
     onSubmit: (values, { resetForm }) => {
       onAddExpense(values.name.trim(), parseFloat(values.cost));
@@ -103,7 +79,6 @@ const AddExpense = ({ onAddExpense, remaining }) => {
         Add Expence
       </Typography>
 
-      {/* Show warning when balance is 0 or no income set */}
       {!canAddExpense && (
         <WarningMessage>
           {remaining <= 0 && remaining !== 0

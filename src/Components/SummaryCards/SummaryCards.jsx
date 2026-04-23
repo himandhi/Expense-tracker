@@ -1,34 +1,7 @@
-// ============================================================
-// FILE: src/components/SummaryCards/SummaryCards.jsx
-// PURPOSE: The 3 colored cards (Income, Remaining, Spent)
-//
-// NEW CONCEPT: Props
-// This component receives data from HomePage via "props".
-// Props are like function arguments — the parent passes data DOWN
-// to the child component.
-//
-// Think of it like:
-//   HomePage says: "Hey SummaryCards, here's the income value: 5000"
-//   SummaryCards says: "Got it, I'll display Income: RS 5000.00"
-//
-// Props received from HomePage:
-//   - income: the income amount (number)
-//   - remaining: income minus spent (number)
-//   - totalSpent: sum of all expenses (number)
-//   - isEditingIncome: whether edit mode is on (boolean)
-//   - incomeInput: the value in the edit text field (string)
-//   - setIncomeInput: function to update incomeInput
-//   - handleEditIncome: function to start editing
-//   - handleSaveIncome: function to save the new income
-// ============================================================
-
 import React from "react";
 import { Box, TextField, Button } from "@mui/material";
 import styled from "styled-components";
 
-// ─────────────────────────────────────────────────────────────
-// STYLED COMPONENTS (moved from HomePage)
-// ─────────────────────────────────────────────────────────────
 
 const CardsRow = styled.div`
   display: grid;
@@ -65,13 +38,7 @@ const SummaryText = styled.span`
   }
 `;
 
-// ─────────────────────────────────────────────────────────────
-// THE COMPONENT
-// ─────────────────────────────────────────────────────────────
 
-// We "destructure" props inside the function parameter.
-// Instead of writing props.income, props.remaining, etc.,
-// we write { income, remaining, ... } to extract them directly.
 const SummaryCards = ({
   income,
   remaining,
@@ -84,7 +51,6 @@ const SummaryCards = ({
 }) => {
   return (
     <CardsRow>
-      {/* Income Card */}
       <SummaryCard bgColor="#c8e6c9">
         <SummaryText>Income: RS {income.toFixed(2)}</SummaryText>
         {isEditingIncome ? (
@@ -131,12 +97,10 @@ const SummaryCards = ({
         )}
       </SummaryCard>
 
-      {/* Remaining Card */}
       <SummaryCard bgColor="#c8e6c9">
         <SummaryText>Remaining: RS {remaining.toFixed(2)}</SummaryText>
       </SummaryCard>
 
-      {/* Spent Card */}
       <SummaryCard bgColor="#81d4fa">
         <SummaryText>Spent: RS {totalSpent.toFixed(2)}</SummaryText>
       </SummaryCard>

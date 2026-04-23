@@ -1,8 +1,3 @@
-// ============================================================
-// FILE: src/pages/RegisterPage/RegisterPage.jsx
-// UPDATED: Now calls backend API for registration
-// ============================================================
-
 import React, { useState } from "react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
@@ -11,9 +6,6 @@ import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
 import { registerUser } from "../../services/api";
 
-// ─────────────────────────────────────────────────────────────
-// STYLED COMPONENTS (unchanged)
-// ─────────────────────────────────────────────────────────────
 
 const PageWrapper = styled.div`
   min-height: 100vh;
@@ -117,9 +109,6 @@ const SuccessMessage = styled.div`
   text-align: center;
 `;
 
-// ─────────────────────────────────────────────────────────────
-// VALIDATION
-// ─────────────────────────────────────────────────────────────
 
 const validationSchema = Yup.object({
   email: Yup.string()
@@ -130,9 +119,6 @@ const validationSchema = Yup.object({
     .required("Password is required"),
 });
 
-// ─────────────────────────────────────────────────────────────
-// THE REGISTER COMPONENT
-// ─────────────────────────────────────────────────────────────
 
 const RegisterPage = () => {
   const navigate = useNavigate();
@@ -143,14 +129,12 @@ const RegisterPage = () => {
     initialValues: { email: "", password: "" },
     validationSchema: validationSchema,
 
-    // CHANGED: Now calls backend API
     onSubmit: async (values) => {
       try {
         setError("");
         setSuccess("");
         await registerUser(values.email, values.password);
 
-        // Show success message, then redirect to login after 2 seconds
         setSuccess("Registration successful! Redirecting to login...");
         setTimeout(() => {
           navigate("/login");

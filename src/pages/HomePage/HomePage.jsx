@@ -1,9 +1,3 @@
-// ============================================================
-// FILE: src/pages/HomePage/HomePage.jsx
-// UPDATED: Passes remaining balance to AddExpense
-//          Prevents negative remaining balance
-// ============================================================
-
 import React, { useState, useEffect } from "react";
 import { Typography, Button } from "@mui/material";
 import styled from "styled-components";
@@ -21,9 +15,6 @@ import {
   setIncome as setIncomeAPI,
 } from "../../services/api";
 
-// ─────────────────────────────────────────────────────────────
-// STYLED COMPONENTS
-// ─────────────────────────────────────────────────────────────
 
 const PageWrapper = styled.div`
   min-height: 100vh;
@@ -50,9 +41,6 @@ const Header = styled.div`
   }
 `;
 
-// ─────────────────────────────────────────────────────────────
-// THE HOME PAGE COMPONENT
-// ─────────────────────────────────────────────────────────────
 
 const HomePage = () => {
   const navigate = useNavigate();
@@ -64,7 +52,7 @@ const HomePage = () => {
     }
   }, [userId, navigate]);
 
-  // ── STATE ──
+
   const [income, setIncome] = useState(0);
   const [isEditingIncome, setIsEditingIncome] = useState(false);
   const [incomeInput, setIncomeInput] = useState("");
@@ -72,7 +60,7 @@ const HomePage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
 
-  // ── FETCH DATA ON PAGE LOAD ──
+
   useEffect(() => {
     if (!userId) return;
 
@@ -98,16 +86,14 @@ const HomePage = () => {
     fetchData();
   }, [userId]);
 
-  // ── CALCULATIONS ──
+
   const totalSpent = expenses.reduce(
     (sum, expense) => sum + Number(expense.cost),
     0
   );
 
-  // CHANGED: Remaining can never go below 0 in the display
   const remaining = Math.max(0, income - totalSpent);
 
-  // ── BUILD TRANSACTION LIST ──
   const transactions = [
     ...expenses.map((e) => ({
       id: e.id,
@@ -122,7 +108,6 @@ const HomePage = () => {
     t.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // ── HANDLERS ──
 
   const handleEditIncome = () => {
     setIncomeInput(income.toString());
@@ -142,7 +127,6 @@ const HomePage = () => {
     }
   };
 
-  // CHANGED: Check remaining balance before adding expense
   const handleAddExpense = async (name, cost) => {
     if (cost > remaining) {
       alert("Cannot add expense: cost exceeds remaining balance.");
@@ -154,7 +138,7 @@ const HomePage = () => {
       setExpenses([...expenses, response.data]);
     } catch (error) {
       console.error("Error adding expense:", error);
-      // Show backend error message if available
+
       const message = error.response?.data?.message || "Failed to add expense.";
       alert(message);
     }
@@ -195,7 +179,7 @@ const HomePage = () => {
     );
   }
 
-  // ── JSX ──
+
   return (
     <PageWrapper>
       <Header>
@@ -246,7 +230,6 @@ const HomePage = () => {
         handleDelete={handleDelete}
       />
 
-      {/* CHANGED: Now passes remaining balance to AddExpense */}
       <AddExpense onAddExpense={handleAddExpense} remaining={remaining} />
     </PageWrapper>
   );

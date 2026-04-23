@@ -1,9 +1,3 @@
-// ============================================================
-// FILE: src/pages/LoginPage/LoginPage.jsx
-// UPDATED: Now calls backend API for login
-//          Stores userId in localStorage on success
-// ============================================================
-
 import React, { useState } from "react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
@@ -12,9 +6,6 @@ import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
 import { loginUser } from "../../services/api";
 
-// ─────────────────────────────────────────────────────────────
-// STYLED COMPONENTS (unchanged)
-// ─────────────────────────────────────────────────────────────
 
 const PageWrapper = styled.div`
   min-height: 100vh;
@@ -101,7 +92,7 @@ const LinksRow = styled.div`
   margin-top: 12px;
 `;
 
-// Error message styled component
+
 const ErrorMessage = styled.div`
   background-color: #ffebee;
   color: #c62828;
@@ -112,9 +103,6 @@ const ErrorMessage = styled.div`
   text-align: center;
 `;
 
-// ─────────────────────────────────────────────────────────────
-// VALIDATION
-// ─────────────────────────────────────────────────────────────
 
 const validationSchema = Yup.object({
   email: Yup.string()
@@ -125,35 +113,28 @@ const validationSchema = Yup.object({
     .required("Password is required"),
 });
 
-// ─────────────────────────────────────────────────────────────
-// THE LOGIN COMPONENT
-// ─────────────────────────────────────────────────────────────
 
 const LoginPage = () => {
   const navigate = useNavigate();
 
-  // NEW: State for API error messages
   const [error, setError] = useState("");
 
   const formik = useFormik({
     initialValues: { email: "", password: "" },
     validationSchema: validationSchema,
 
-    // CHANGED: Now calls backend API instead of just navigating
     onSubmit: async (values) => {
       try {
         setError("");
         const response = await loginUser(values.email, values.password);
 
-        // Store userId and email in localStorage
-        // So HomePage knows who's logged in
+
         localStorage.setItem("userId", response.data.userId);
         localStorage.setItem("userEmail", response.data.email);
 
-        // Navigate to home
         navigate("/home");
       } catch (err) {
-        // Show error message from backend
+
         const message =
           err.response?.data?.message || "Login failed. Please try again.";
         setError(message);
@@ -178,7 +159,7 @@ const LoginPage = () => {
           Login
         </Typography>
 
-        {/* Show error if login fails */}
+
         {error && <ErrorMessage>{error}</ErrorMessage>}
 
         <Box component="form" onSubmit={formik.handleSubmit} noValidate>

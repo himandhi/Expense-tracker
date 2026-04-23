@@ -1,23 +1,9 @@
-// ============================================================
-// FILE: src/components/TransactionHistory/TransactionHistory.jsx
-// PURPOSE: History section — search bar + transaction list
-//
-// Props received from HomePage:
-//   - transactions: array of all transactions (filtered by search)
-//   - searchTerm: current search text
-//   - setSearchTerm: function to update search text
-//   - handleDelete: function to delete a transaction
-// ============================================================
-
 import React from "react";
 import { Box, Typography, TextField, IconButton, InputAdornment } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import SearchIcon from "@mui/icons-material/Search";
 import styled from "styled-components";
 
-// ─────────────────────────────────────────────────────────────
-// STYLED COMPONENTS (moved from HomePage)
-// ─────────────────────────────────────────────────────────────
 
 const HistorySection = styled.div`
   margin-bottom: 32px;
@@ -97,9 +83,6 @@ const SearchField = styled(TextField)`
   }
 `;
 
-// ─────────────────────────────────────────────────────────────
-// THE COMPONENT
-// ─────────────────────────────────────────────────────────────
 
 const TransactionHistory = ({
   transactions,
