@@ -1,34 +1,18 @@
 // ============================================================
 // FILE: src/pages/HomePage/HomePage.jsx
-// PURPOSE: Home page — NOW slim! Uses components + backend APIs
-//
-// WHAT CHANGED:
-// 1. SummaryCards, TransactionHistory, AddExpense are now
-//    separate components imported from src/components/
-// 2. Data comes from the backend API (not hardcoded useState)
-// 3. useEffect fetches data when the page loads
-//
-// NEW CONCEPTS:
-// - useEffect: Runs code when the component first appears
-// - API calls: Fetching/sending data to the backend
-// - localStorage: Stores userId so we know who's logged in
+// UPDATED: Passes remaining balance to AddExpense
+//          Prevents negative remaining balance
 // ============================================================
 
 import React, { useState, useEffect } from "react";
-// ↑ useEffect: A React hook that runs code AFTER the component
-//   renders. We use it to fetch data from the backend when
-//   the page first loads.
-
 import { Typography, Button } from "@mui/material";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
 
-// ── Import our 3 components ──
 import SummaryCards from "../../components/SummaryCards/SummaryCards";
 import TransactionHistory from "../../components/TransactionHistory/TransactionHistory";
 import AddExpense from "../../components/AddExpense/AddExpense";
 
-// ── Import API functions ──
 import {
   getExpenses,
   addExpense,
@@ -38,7 +22,7 @@ import {
 } from "../../services/api";
 
 // ─────────────────────────────────────────────────────────────
-// STYLED COMPONENTS (only the ones HomePage needs directly)
+// STYLED COMPONENTS
 // ─────────────────────────────────────────────────────────────
 
 const PageWrapper = styled.div`
@@ -72,13 +56,8 @@ const Header = styled.div`
 
 const HomePage = () => {
   const navigate = useNavigate();
-
-  // ── Get userId from localStorage ──
-  // When the user logs in, we store their userId in localStorage.
-  // localStorage persists even when the page refreshes.
   const userId = localStorage.getItem("userId");
 
-  // If no userId, user isn't logged in — redirect to login
   useEffect(() => {
     if (!userId) {
       navigate("/login");
@@ -94,15 +73,11 @@ const HomePage = () => {
   const [loading, setLoading] = useState(true);
 
   // ── FETCH DATA ON PAGE LOAD ──
-  // useEffect with [] runs ONCE when the component first appears.
-  // It calls the backend to get expenses and income.
   useEffect(() => {
     if (!userId) return;
 
     const fetchData = async () => {
       try {
-        // Call both APIs at the same time using Promise.all
-        // This is faster than calling them one after another
         const [expensesRes, incomeRes] = await Promise.all([
           getExpenses(userId),
           getIncome(userId),
@@ -128,9 +103,11 @@ const HomePage = () => {
     (sum, expense) => sum + Number(expense.cost),
     0
   );
-  const remaining = income - totalSpent;
 
-  // ── BUILD TRANSACTION LIST (expenses + income for history) ──
+  // CHANGED: Remaining can never go below 0 in the display
+  const remaining = Math.max(0, income - totalSpent);
+
+  // ── BUILD TRANSACTION LIST ──
   const transactions = [
     ...expenses.map((e) => ({
       id: e.id,
@@ -141,20 +118,17 @@ const HomePage = () => {
     { id: "income", name: "Income", cost: income, type: "income" },
   ];
 
-  // Filter transactions by search term
   const filteredTransactions = transactions.filter((t) =>
     t.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   // ── HANDLERS ──
 
-  // Handle income edit
   const handleEditIncome = () => {
     setIncomeInput(income.toString());
     setIsEditingIncome(true);
   };
 
-  // Handle income save — calls backend API
   const handleSaveIncome = async () => {
     const newIncome = parseFloat(incomeInput);
     if (!isNaN(newIncome) && newIncome >= 0) {
@@ -168,21 +142,26 @@ const HomePage = () => {
     }
   };
 
-  // Handle add expense — calls backend API
+  // CHANGED: Check remaining balance before adding expense
   const handleAddExpense = async (name, cost) => {
+    if (cost > remaining) {
+      alert("Cannot add expense: cost exceeds remaining balance.");
+      return;
+    }
+
     try {
       const response = await addExpense(userId, name, cost);
-      // Add the new expense returned from the backend to our list
       setExpenses([...expenses, response.data]);
     } catch (error) {
       console.error("Error adding expense:", error);
+      // Show backend error message if available
+      const message = error.response?.data?.message || "Failed to add expense.";
+      alert(message);
     }
   };
 
-  // Handle delete — calls backend API
   const handleDelete = async (id, type) => {
     if (type === "income") {
-      // Reset income to 0
       try {
         await setIncomeAPI(userId, 0);
         setIncome(0);
@@ -200,14 +179,12 @@ const HomePage = () => {
     }
   };
 
-  // Handle sign out
   const handleSignOut = () => {
     localStorage.removeItem("userId");
     localStorage.removeItem("userEmail");
     navigate("/login");
   };
 
-  // Show loading while fetching data
   if (loading) {
     return (
       <PageWrapper>
@@ -218,10 +195,9 @@ const HomePage = () => {
     );
   }
 
-  // ── JSX — Notice how clean this is now! ──
+  // ── JSX ──
   return (
     <PageWrapper>
-      {/* ═══ HEADER ═══ */}
       <Header>
         <Typography
           variant="h4"
@@ -252,7 +228,6 @@ const HomePage = () => {
         </Button>
       </Header>
 
-      {/* ═══ SUMMARY CARDS (Component) ═══ */}
       <SummaryCards
         income={income}
         remaining={remaining}
@@ -264,7 +239,6 @@ const HomePage = () => {
         handleSaveIncome={handleSaveIncome}
       />
 
-      {/* ═══ TRANSACTION HISTORY (Component) ═══ */}
       <TransactionHistory
         transactions={filteredTransactions}
         searchTerm={searchTerm}
@@ -272,8 +246,8 @@ const HomePage = () => {
         handleDelete={handleDelete}
       />
 
-      {/* ═══ ADD EXPENSE (Component) ═══ */}
-      <AddExpense onAddExpense={handleAddExpense} />
+      {/* CHANGED: Now passes remaining balance to AddExpense */}
+      <AddExpense onAddExpense={handleAddExpense} remaining={remaining} />
     </PageWrapper>
   );
 };

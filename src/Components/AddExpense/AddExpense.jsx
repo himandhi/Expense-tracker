@@ -1,10 +1,8 @@
 // ============================================================
 // FILE: src/components/AddExpense/AddExpense.jsx
-// PURPOSE: "Add Expence" form — Name, Cost fields + Save button
-//
-// Props received from HomePage:
-//   - onAddExpense: function to call when form is submitted
-//                   HomePage handles saving to the backend
+// UPDATED: Prevents adding expenses when remaining balance is 0
+//          Shows warning when balance is low
+//          Validates cost doesn't exceed remaining balance
 // ============================================================
 
 import React from "react";
@@ -14,7 +12,7 @@ import * as Yup from "yup";
 import styled from "styled-components";
 
 // ─────────────────────────────────────────────────────────────
-// STYLED COMPONENTS (moved from HomePage)
+// STYLED COMPONENTS
 // ─────────────────────────────────────────────────────────────
 
 const AddExpenseSection = styled.div`
@@ -36,55 +34,55 @@ const StyledTextField = styled(TextField)`
   && {
     .MuiOutlinedInput-root {
       border-radius: 8px;
-
-      fieldset {
-        border-color: #cccccc;
-      }
-
-      &:hover fieldset {
-        border-color: #1a8fb5;
-      }
-
-      &.Mui-focused fieldset {
-        border-color: #1a8fb5;
-        border-width: 2px;
-      }
+      fieldset { border-color: #cccccc; }
+      &:hover fieldset { border-color: #1a8fb5; }
+      &.Mui-focused fieldset { border-color: #1a8fb5; border-width: 2px; }
     }
-
-    .MuiInputLabel-root {
-      color: #333333;
-    }
-
-    .MuiInputLabel-root.Mui-focused {
-      color: #333333;
-    }
+    .MuiInputLabel-root { color: #333333; }
+    .MuiInputLabel-root.Mui-focused { color: #333333; }
   }
 `;
 
-// ─────────────────────────────────────────────────────────────
-// VALIDATION SCHEMA (moved from HomePage)
-// ─────────────────────────────────────────────────────────────
-
-const expenseValidationSchema = Yup.object({
-  name: Yup.string().trim().required("Name is required"),
-  cost: Yup.number()
-    .typeError("Cost must be a number")
-    .positive("Cost must be greater than 0")
-    .required("Cost is required"),
-});
+// Warning message when balance is 0
+const WarningMessage = styled.div`
+  background-color: #fff3e0;
+  color: #e65100;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  margin-bottom: 16px;
+  text-align: center;
+`;
 
 // ─────────────────────────────────────────────────────────────
 // THE COMPONENT
+//
+// NEW PROP: remaining
+// The parent (HomePage) passes the remaining balance so we can:
+// 1. Disable the form when remaining <= 0
+// 2. Validate that cost doesn't exceed remaining
 // ─────────────────────────────────────────────────────────────
 
-const AddExpense = ({ onAddExpense }) => {
-  // Formik now lives INSIDE this component (not in HomePage)
-  // When the form submits, it calls onAddExpense (passed from HomePage)
+const AddExpense = ({ onAddExpense, remaining }) => {
+  // Check if user can add expenses
+  const canAddExpense = remaining > 0;
+
+  // Dynamic validation — cost can't exceed remaining balance
+  const expenseValidationSchema = Yup.object({
+    name: Yup.string().trim().required("Name is required"),
+    cost: Yup.number()
+      .typeError("Cost must be a number")
+      .positive("Cost must be greater than 0")
+      .max(remaining, `Cost cannot exceed remaining balance (Rs. ${remaining.toFixed(2)})`)
+      .required("Cost is required"),
+  });
+
   const formik = useFormik({
     initialValues: { name: "", cost: "" },
     validationSchema: expenseValidationSchema,
+    // Need to enable reinitialize so validation updates when remaining changes
+    enableReinitialize: true,
     onSubmit: (values, { resetForm }) => {
-      // Call the parent's function to handle saving
       onAddExpense(values.name.trim(), parseFloat(values.cost));
       resetForm();
     },
@@ -105,6 +103,15 @@ const AddExpense = ({ onAddExpense }) => {
         Add Expence
       </Typography>
 
+      {/* Show warning when balance is 0 or no income set */}
+      {!canAddExpense && (
+        <WarningMessage>
+          {remaining <= 0 && remaining !== 0
+            ? "Your remaining balance is 0. You cannot add more expenses."
+            : "Your remaining balance is 0. Please increase your income or delete some expenses to add new ones."}
+        </WarningMessage>
+      )}
+
       <Box component="form" onSubmit={formik.handleSubmit} noValidate>
         <FormRow>
           <StyledTextField
@@ -119,6 +126,7 @@ const AddExpense = ({ onAddExpense }) => {
             onBlur={formik.handleBlur}
             error={formik.touched.name && Boolean(formik.errors.name)}
             helperText={formik.touched.name && formik.errors.name}
+            disabled={!canAddExpense}
           />
           <StyledTextField
             fullWidth
@@ -132,12 +140,14 @@ const AddExpense = ({ onAddExpense }) => {
             onBlur={formik.handleBlur}
             error={formik.touched.cost && Boolean(formik.errors.cost)}
             helperText={formik.touched.cost && formik.errors.cost}
+            disabled={!canAddExpense}
           />
         </FormRow>
 
         <Button
           type="submit"
           variant="contained"
+          disabled={!canAddExpense}
           sx={{
             backgroundColor: "#1a8fb5",
             color: "#ffffff",
@@ -146,6 +156,7 @@ const AddExpense = ({ onAddExpense }) => {
             borderRadius: "8px",
             padding: "8px 32px",
             "&:hover": { backgroundColor: "#0d6d8a" },
+            "&:disabled": { backgroundColor: "#b0bec5", color: "#ffffff" },
             "@media (max-width: 600px)": { width: "100%" },
           }}
         >
