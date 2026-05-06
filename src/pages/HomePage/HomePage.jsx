@@ -2,18 +2,19 @@ import React, { useState, useEffect } from "react";
 import { Typography, Button } from "@mui/material";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
 
 import SummaryCards from "../../components/SummaryCards/SummaryCards";
 import TransactionHistory from "../../components/TransactionHistory/TransactionHistory";
 import AddExpense from "../../components/AddExpense/AddExpense";
 
 import {
-  getExpenses,
-  addExpense,
-  deleteExpense,
-  getIncome,
-  setIncome as setIncomeAPI,
-} from "../../services/api";
+  fetchExpensesRequest,
+  addExpenseRequest,
+  deleteExpenseRequest,
+} from "../../store/slices/expenseSlice";
+import { fetchIncomeRequest, setIncomeRequest } from "../../store/slices/incomeSlice";
+import { logout } from "../../store/slices/authSlice";
 
 
 const PageWrapper = styled.div`
@@ -44,49 +45,35 @@ const Header = styled.div`
 
 const HomePage = () => {
   const navigate = useNavigate();
-  const userId = localStorage.getItem("userId");
+  const dispatch = useDispatch();
 
+  // --- Redux state ---
+  const { userId } = useSelector((state) => state.auth);
+  const { items: expenses, loading: expensesLoading } = useSelector((state) => state.expenses);
+  const { amount: income, loading: incomeLoading } = useSelector((state) => state.income);
+
+  // --- Local UI-only state (not stored in Redux) ---
+  const [isEditingIncome, setIsEditingIncome] = useState(false);
+  const [incomeInput, setIncomeInput] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+
+  // Redirect to login if not authenticated
   useEffect(() => {
     if (!userId) {
       navigate("/login");
     }
   }, [userId, navigate]);
 
-
-  const [income, setIncome] = useState(0);
-  const [isEditingIncome, setIsEditingIncome] = useState(false);
-  const [incomeInput, setIncomeInput] = useState("");
-  const [expenses, setExpenses] = useState([]);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [loading, setLoading] = useState(true);
-
-
+  // Fetch data on mount via sagas
   useEffect(() => {
-    if (!userId) return;
-
-    const fetchData = async () => {
-      try {
-        const [expensesRes, incomeRes] = await Promise.all([
-          getExpenses(userId),
-          getIncome(userId),
-        ]);
-
-        setExpenses(expensesRes.data);
-
-        if (incomeRes.data) {
-          setIncome(Number(incomeRes.data.amount));
-        }
-      } catch (error) {
-        console.error("Error fetching data:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, [userId]);
+    if (userId) {
+      dispatch(fetchExpensesRequest(userId));
+      dispatch(fetchIncomeRequest(userId));
+    }
+  }, [userId, dispatch]);
 
 
+  // --- Derived values ---
   const totalSpent = expenses.reduce(
     (sum, expense) => sum + Number(expense.cost),
     0
@@ -109,67 +96,46 @@ const HomePage = () => {
   );
 
 
+  // --- Handlers ---
   const handleEditIncome = () => {
     setIncomeInput(income.toString());
     setIsEditingIncome(true);
   };
 
-  const handleSaveIncome = async () => {
+  const handleSaveIncome = () => {
     const newIncome = parseFloat(incomeInput);
     if (!isNaN(newIncome) && newIncome >= 0) {
-      try {
-        await setIncomeAPI(userId, newIncome);
-        setIncome(newIncome);
-        setIsEditingIncome(false);
-      } catch (error) {
-        console.error("Error saving income:", error);
-      }
+      dispatch(setIncomeRequest({ userId, amount: newIncome }));
+      setIsEditingIncome(false);
     }
   };
 
-  const handleAddExpense = async (name, cost) => {
+  const handleAddExpense = (name, cost) => {
     if (cost > remaining) {
       alert("Cannot add expense: cost exceeds remaining balance.");
       return;
     }
-
-    try {
-      const response = await addExpense(userId, name, cost);
-      setExpenses([...expenses, response.data]);
-    } catch (error) {
-      console.error("Error adding expense:", error);
-
-      const message = error.response?.data?.message || "Failed to add expense.";
-      alert(message);
-    }
+    dispatch(addExpenseRequest({ userId, name, cost }));
   };
 
-  const handleDelete = async (id, type) => {
+  const handleDelete = (id, type) => {
     if (type === "income") {
-      try {
-        await setIncomeAPI(userId, 0);
-        setIncome(0);
-      } catch (error) {
-        console.error("Error resetting income:", error);
-      }
+      dispatch(setIncomeRequest({ userId, amount: 0 }));
       return;
     }
-
-    try {
-      await deleteExpense(id, userId);
-      setExpenses(expenses.filter((e) => e.id !== id));
-    } catch (error) {
-      console.error("Error deleting expense:", error);
-    }
+    dispatch(deleteExpenseRequest({ expenseId: id, userId }));
   };
 
   const handleSignOut = () => {
     localStorage.removeItem("userId");
     localStorage.removeItem("userEmail");
+    dispatch(logout());
     navigate("/login");
   };
 
-  if (loading) {
+
+  // Show loading screen while either fetch saga is in flight
+  if (expensesLoading || incomeLoading) {
     return (
       <PageWrapper>
         <Typography sx={{ textAlign: "center", marginTop: "40px" }}>

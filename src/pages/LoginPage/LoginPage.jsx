@@ -1,10 +1,11 @@
-import React, { useState } from "react";
+import React, { useEffect } from "react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import { Box, Typography, TextField, Button, Link } from "@mui/material";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
-import { loginUser } from "../../services/api";
+import { useDispatch, useSelector } from "react-redux";
+import { loginRequest, clearError } from "../../store/slices/authSlice";
 
 
 const PageWrapper = styled.div`
@@ -92,7 +93,6 @@ const LinksRow = styled.div`
   margin-top: 12px;
 `;
 
-
 const ErrorMessage = styled.div`
   background-color: #ffebee;
   color: #c62828;
@@ -116,29 +116,27 @@ const validationSchema = Yup.object({
 
 const LoginPage = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const { loading, error, userId } = useSelector((state) => state.auth);
 
-  const [error, setError] = useState("");
+  // Navigate when login succeeds
+  useEffect(() => {
+    if (userId) {
+      navigate("/home");
+    }
+  }, [userId, navigate]);
+
+  // Clear any leftover errors when the page first loads
+  useEffect(() => {
+    dispatch(clearError());
+  }, [dispatch]);
 
   const formik = useFormik({
     initialValues: { email: "", password: "" },
     validationSchema: validationSchema,
-
-    onSubmit: async (values) => {
-      try {
-        setError("");
-        const response = await loginUser(values.email, values.password);
-
-
-        localStorage.setItem("userId", response.data.userId);
-        localStorage.setItem("userEmail", response.data.email);
-
-        navigate("/home");
-      } catch (err) {
-
-        const message =
-          err.response?.data?.message || "Login failed. Please try again.";
-        setError(message);
-      }
+    onSubmit: (values) => {
+      // Dispatch action — saga handles the API call
+      dispatch(loginRequest({ email: values.email, password: values.password }));
     },
   });
 
@@ -158,7 +156,6 @@ const LoginPage = () => {
         >
           Login
         </Typography>
-
 
         {error && <ErrorMessage>{error}</ErrorMessage>}
 
@@ -183,8 +180,13 @@ const LoginPage = () => {
             helperText={formik.touched.password && formik.errors.password}
           />
 
-          <StyledButton type="submit" variant="contained" disableElevation>
-            Sign In
+          <StyledButton
+            type="submit"
+            variant="contained"
+            disableElevation
+            disabled={loading}
+          >
+            {loading ? "Signing in..." : "Sign In"}
           </StyledButton>
 
           <LinksRow>
