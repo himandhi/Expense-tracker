@@ -1,11 +1,39 @@
-import React, { useState } from "react";
+// ============================================================
+// FILE: src/pages/RegisterPage/RegisterPage.jsx
+// UPDATED: Now uses Redux Saga instead of direct API calls
+//
+// WHAT CHANGED:
+// Before: import { registerUser } from "../../services/api"
+//         await registerUser(values.email, values.password)
+//
+// After:  import { useDispatch, useSelector } from "react-redux"
+//         dispatch(registerRequest({ email, password }))
+//         The saga handles the API call in the background
+// ============================================================
+
+import React, { useEffect } from "react";
+// ↑ CHANGED: Removed useState (error/success now come from Redux)
+//            Added useEffect (to watch for registerSuccess)
+
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import { Box, Typography, TextField, Button, Link } from "@mui/material";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
-import { registerUser } from "../../services/api";
 
+// NEW: Redux imports replace direct API import
+import { useDispatch, useSelector } from "react-redux";
+import {
+  registerRequest,
+  clearError,
+} from "../../store/slices/authSlice";
+
+// REMOVED: import { registerUser } from "../../services/api";
+// The saga now calls registerUser internally
+
+// ─────────────────────────────────────────────────────────────
+// STYLED COMPONENTS (unchanged)
+// ─────────────────────────────────────────────────────────────
 
 const PageWrapper = styled.div`
   min-height: 100vh;
@@ -109,6 +137,9 @@ const SuccessMessage = styled.div`
   text-align: center;
 `;
 
+// ─────────────────────────────────────────────────────────────
+// VALIDATION (unchanged)
+// ─────────────────────────────────────────────────────────────
 
 const validationSchema = Yup.object({
   email: Yup.string()
@@ -119,32 +150,56 @@ const validationSchema = Yup.object({
     .required("Password is required"),
 });
 
+// ─────────────────────────────────────────────────────────────
+// THE REGISTER COMPONENT
+// ─────────────────────────────────────────────────────────────
 
 const RegisterPage = () => {
   const navigate = useNavigate();
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
+
+  // NEW: Get dispatch function and Redux state
+  const dispatch = useDispatch();
+  const { loading, error, registerSuccess } = useSelector(
+    (state) => state.auth
+  );
+
+  // REMOVED: const [error, setError] = useState("");
+  // REMOVED: const [success, setSuccess] = useState("");
+  // Error and success now come from Redux store
+
+  // NEW: Clear errors when page first loads
+  useEffect(() => {
+    dispatch(clearError());
+  }, [dispatch]);
+
+  // NEW: When registration succeeds, redirect to login after 2 seconds
+  useEffect(() => {
+    if (registerSuccess) {
+      const timer = setTimeout(() => {
+        navigate("/login");
+      }, 2000);
+      // Cleanup: cancel timer if component unmounts before 2 seconds
+      return () => clearTimeout(timer);
+    }
+  }, [registerSuccess, navigate]);
 
   const formik = useFormik({
     initialValues: { email: "", password: "" },
     validationSchema: validationSchema,
 
-    onSubmit: async (values) => {
-      try {
-        setError("");
-        setSuccess("");
-        await registerUser(values.email, values.password);
-
-        setSuccess("Registration successful! Redirecting to login...");
-        setTimeout(() => {
-          navigate("/login");
-        }, 2000);
-      } catch (err) {
-        const message =
-          err.response?.data?.message || "Registration failed. Please try again.";
-        setError(message);
-      }
+    // CHANGED: Dispatch action instead of calling API directly
+    // Before: await registerUser(values.email, values.password)
+    // After:  dispatch(registerRequest({ ... }))
+    onSubmit: (values) => {
+      dispatch(
+        registerRequest({
+          email: values.email,
+          password: values.password,
+        })
+      );
     },
+    // REMOVED: async, try-catch, setError, setSuccess
+    // The saga handles all of that now
   });
 
   return (
@@ -164,8 +219,13 @@ const RegisterPage = () => {
           Register
         </Typography>
 
+        {/* Error and success now read from Redux state */}
         {error && <ErrorMessage>{error}</ErrorMessage>}
-        {success && <SuccessMessage>{success}</SuccessMessage>}
+        {registerSuccess && (
+          <SuccessMessage>
+            Registration successful! Redirecting to login...
+          </SuccessMessage>
+        )}
 
         <Box component="form" onSubmit={formik.handleSubmit} noValidate>
           <StyledTextField
@@ -188,8 +248,14 @@ const RegisterPage = () => {
             helperText={formik.touched.password && formik.errors.password}
           />
 
-          <StyledButton type="submit" variant="contained" disableElevation>
-            Register
+          {/* NEW: Button disabled while loading */}
+          <StyledButton
+            type="submit"
+            variant="contained"
+            disableElevation
+            disabled={loading}
+          >
+            {loading ? "Registering..." : "Register"}
           </StyledButton>
 
           <BackLinkWrapper>
