@@ -119,14 +119,13 @@ const LoginPage = () => {
   const dispatch = useDispatch();
   const { loading, error, userId } = useSelector((state) => state.auth);
 
-  // Navigate when login succeeds
+
   useEffect(() => {
     if (userId) {
       navigate("/home");
     }
   }, [userId, navigate]);
 
-  // Clear any leftover errors when the page first loads
   useEffect(() => {
     dispatch(clearError());
   }, [dispatch]);
@@ -135,7 +134,6 @@ const LoginPage = () => {
     initialValues: { email: "", password: "" },
     validationSchema: validationSchema,
     onSubmit: (values) => {
-      // Dispatch action — saga handles the API call
       dispatch(loginRequest({ email: values.email, password: values.password }));
     },
   });

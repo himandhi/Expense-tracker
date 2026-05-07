@@ -47,24 +47,24 @@ const HomePage = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  // --- Redux state ---
+
   const { userId } = useSelector((state) => state.auth);
   const { items: expenses, loading: expensesLoading } = useSelector((state) => state.expenses);
   const { amount: income, loading: incomeLoading } = useSelector((state) => state.income);
 
-  // --- Local UI-only state (not stored in Redux) ---
+
   const [isEditingIncome, setIsEditingIncome] = useState(false);
   const [incomeInput, setIncomeInput] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
 
-  // Redirect to login if not authenticated
+ 
   useEffect(() => {
     if (!userId) {
       navigate("/login");
     }
   }, [userId, navigate]);
 
-  // Fetch data on mount via sagas
+
   useEffect(() => {
     if (userId) {
       dispatch(fetchExpensesRequest(userId));
@@ -73,7 +73,7 @@ const HomePage = () => {
   }, [userId, dispatch]);
 
 
-  // --- Derived values ---
+
   const totalSpent = expenses.reduce(
     (sum, expense) => sum + Number(expense.cost),
     0
@@ -96,7 +96,7 @@ const HomePage = () => {
   );
 
 
-  // --- Handlers ---
+
   const handleEditIncome = () => {
     setIncomeInput(income.toString());
     setIsEditingIncome(true);
@@ -134,7 +134,7 @@ const HomePage = () => {
   };
 
 
-  // Show loading screen while either fetch saga is in flight
+
   if (expensesLoading || incomeLoading) {
     return (
       <PageWrapper>

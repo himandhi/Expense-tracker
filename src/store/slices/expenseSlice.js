@@ -8,7 +8,6 @@ const expenseSlice = createSlice({
     error: null,
   },
   reducers: {
-    // Fetch expenses
     fetchExpensesRequest: (state) => {
       state.loading = true;
       state.error = null;
@@ -22,7 +21,6 @@ const expenseSlice = createSlice({
       state.error = action.payload;
     },
 
-    // Add expense
     addExpenseRequest: (state) => {
       state.loading = true;
       state.error = null;
@@ -36,7 +34,6 @@ const expenseSlice = createSlice({
       state.error = action.payload;
     },
 
-    // Delete expense
     deleteExpenseRequest: (state) => {
       state.loading = true;
       state.error = null;

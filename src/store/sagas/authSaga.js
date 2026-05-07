@@ -9,13 +9,11 @@ import {
   registerFailure,
 } from '../slices/authSlice';
 
-// Worker saga: handles login API call
 function* handleLogin(action) {
   try {
     const { email, password } = action.payload;
     const response = yield call(loginUser, email, password);
 
-    // Store in localStorage
     localStorage.setItem('userId', response.data.userId);
     localStorage.setItem('userEmail', response.data.email);
 
@@ -27,7 +25,6 @@ function* handleLogin(action) {
   }
 }
 
-// Worker saga: handles register API call
 function* handleRegister(action) {
   try {
     const { email, password } = action.payload;
@@ -40,7 +37,6 @@ function* handleRegister(action) {
   }
 }
 
-// Watcher saga: watches for dispatched actions
 export default function* authSaga() {
   yield takeLatest(loginRequest.type, handleLogin);
   yield takeLatest(registerRequest.type, handleRegister);

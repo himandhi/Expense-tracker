@@ -10,7 +10,6 @@ const authSlice = createSlice({
     registerSuccess: false,
   },
   reducers: {
-    // Login
     loginRequest: (state) => {
       state.loading = true;
       state.error = null;
@@ -26,7 +25,6 @@ const authSlice = createSlice({
       state.error = action.payload;
     },
 
-    // Register
     registerRequest: (state) => {
       state.loading = true;
       state.error = null;
@@ -43,13 +41,11 @@ const authSlice = createSlice({
       state.registerSuccess = false;
     },
 
-    // Logout
     logout: (state) => {
       state.userId = null;
       state.userEmail = null;
     },
 
-    // Clear errors
     clearError: (state) => {
       state.error = null;
     },
