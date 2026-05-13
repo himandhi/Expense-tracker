@@ -1,6 +1,7 @@
 // ============================================================
 // FILE: src/pages/HomePage/HomePage.jsx
-// UPDATED: Added handleEdit function for expense editing
+// UPDATED: displayName now uses email prefix (before @) as fallback
+//          "user1@gmail.com" → displays "user1"
 // ============================================================
 
 import React, { useState, useEffect } from "react";
@@ -108,7 +109,9 @@ const HomePage = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  const { userId, userEmail, username } = useSelector((state) => state.auth);
+  const { userId, userEmail, username, role } = useSelector(
+    (state) => state.auth
+  );
   const { items: expenses, loading: expensesLoading } = useSelector(
     (state) => state.expenses
   );
@@ -178,10 +181,6 @@ const HomePage = () => {
     dispatch(addExpenseRequest({ name, cost }));
   };
 
-  // NEW: Handle expense edit — dispatches updateExpenseRequest
-  // expenseId: the id of the expense to update
-  // name: new name
-  // cost: new cost
   const handleEdit = (expenseId, name, cost) => {
     dispatch(updateExpenseRequest({ expenseId, name, cost }));
   };
@@ -220,9 +219,17 @@ const HomePage = () => {
     );
   }
 
-  const avatarLetter =
-    username?.charAt(0) || userEmail?.charAt(0) || "U";
-  const displayName = username || userEmail || "User";
+  // CHANGED: Display name logic
+  // Priority: username → email prefix → "User"
+  // "user1@gmail.com" → "user1"
+  // "himandhiow191@gmail.com" → "himandhiow191"
+  const emailPrefix = userEmail ? userEmail.split("@")[0] : null;
+  const displayName = username && username.trim() !== ""
+    ? username
+    : emailPrefix || "User";
+
+  // Avatar: first letter of display name
+  const avatarLetter = displayName.charAt(0).toUpperCase();
 
   // ── JSX ──
   return (
@@ -241,6 +248,32 @@ const HomePage = () => {
             <UserAvatar>{avatarLetter}</UserAvatar>
             <UserName>{displayName}</UserName>
           </UserProfile>
+
+          {/* Admin Panel button — only for admin users */}
+          {role === "admin" && (
+            <Button
+              variant="outlined"
+              onClick={() => navigate("/admin")}
+              sx={{
+                borderColor: "#2563eb",
+                color: "#2563eb",
+                fontWeight: 600,
+                textTransform: "none",
+                borderRadius: "20px",
+                padding: "8px 20px",
+                "&:hover": {
+                  backgroundColor: "#eff6ff",
+                  borderColor: "#1d4ed8",
+                },
+                "@media (max-width: 600px)": {
+                  width: "100%",
+                  borderRadius: "8px",
+                },
+              }}
+            >
+              Admin Panel
+            </Button>
+          )}
 
           <Button
             variant="contained"
@@ -275,7 +308,6 @@ const HomePage = () => {
         handleSaveIncome={handleSaveIncome}
       />
 
-      {/* UPDATED: Now passes handleEdit and remaining to TransactionHistory */}
       <TransactionHistory
         transactions={filteredTransactions}
         searchTerm={searchTerm}
