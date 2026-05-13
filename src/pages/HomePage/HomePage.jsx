@@ -1,9 +1,6 @@
 // ============================================================
 // FILE: src/pages/HomePage/HomePage.jsx
-// UPDATED: 
-// 1. Removed userId from all dispatch calls (JWT handles it)
-// 2. Added username display in header (Task 1)
-// 3. Updated sign out to call backend logout API
+// UPDATED: Added handleEdit function for expense editing
 // ============================================================
 
 import React, { useState, useEffect } from "react";
@@ -19,6 +16,7 @@ import AddExpense from "../../components/AddExpense/AddExpense";
 import {
   fetchExpensesRequest,
   addExpenseRequest,
+  updateExpenseRequest,
   deleteExpenseRequest,
 } from "../../store/slices/expenseSlice";
 import {
@@ -57,7 +55,6 @@ const Header = styled.div`
   }
 `;
 
-// NEW: Right side of header — username + sign out button
 const HeaderRight = styled.div`
   display: flex;
   align-items: center;
@@ -70,7 +67,6 @@ const HeaderRight = styled.div`
   }
 `;
 
-// NEW: User profile display
 const UserProfile = styled.div`
   display: flex;
   align-items: center;
@@ -112,7 +108,6 @@ const HomePage = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  // CHANGED: Also read username and role from Redux auth state
   const { userId, userEmail, username } = useSelector((state) => state.auth);
   const { items: expenses, loading: expensesLoading } = useSelector(
     (state) => state.expenses
@@ -125,17 +120,12 @@ const HomePage = () => {
   const [incomeInput, setIncomeInput] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
 
-  // Redirect to login if not authenticated
   useEffect(() => {
     if (!userId) {
       navigate("/login");
     }
   }, [userId, navigate]);
 
-  // CHANGED: Removed userId from dispatch calls
-  // Before: dispatch(fetchExpensesRequest(userId))
-  // After:  dispatch(fetchExpensesRequest())
-  // The saga calls getExpenses() with no userId — cookie handles it
   useEffect(() => {
     if (userId) {
       dispatch(fetchExpensesRequest());
@@ -172,9 +162,6 @@ const HomePage = () => {
     setIsEditingIncome(true);
   };
 
-  // CHANGED: Removed userId from dispatch payload
-  // Before: dispatch(setIncomeRequest({ userId, amount: newIncome }))
-  // After:  dispatch(setIncomeRequest({ amount: newIncome }))
   const handleSaveIncome = () => {
     const newIncome = parseFloat(incomeInput);
     if (!isNaN(newIncome) && newIncome >= 0) {
@@ -183,9 +170,6 @@ const HomePage = () => {
     }
   };
 
-  // CHANGED: Removed userId from dispatch payload
-  // Before: dispatch(addExpenseRequest({ userId, name, cost }))
-  // After:  dispatch(addExpenseRequest({ name, cost }))
   const handleAddExpense = (name, cost) => {
     if (cost > remaining) {
       alert("Cannot add expense: cost exceeds remaining balance.");
@@ -194,11 +178,14 @@ const HomePage = () => {
     dispatch(addExpenseRequest({ name, cost }));
   };
 
-  // CHANGED: Removed userId from both dispatch calls
-  // Before: dispatch(setIncomeRequest({ userId, amount: 0 }))
-  //         dispatch(deleteExpenseRequest({ expenseId: id, userId }))
-  // After:  dispatch(setIncomeRequest({ amount: 0 }))
-  //         dispatch(deleteExpenseRequest({ expenseId: id }))
+  // NEW: Handle expense edit — dispatches updateExpenseRequest
+  // expenseId: the id of the expense to update
+  // name: new name
+  // cost: new cost
+  const handleEdit = (expenseId, name, cost) => {
+    dispatch(updateExpenseRequest({ expenseId, name, cost }));
+  };
+
   const handleDelete = (id, type) => {
     if (type === "income") {
       dispatch(setIncomeRequest({ amount: 0 }));
@@ -207,23 +194,22 @@ const HomePage = () => {
     dispatch(deleteExpenseRequest({ expenseId: id }));
   };
 
-  // CHANGED: Now calls backend logout API to clear cookies
   const handleSignOut = async () => {
     try {
       await logoutUser();
     } catch (error) {
-      // Even if API call fails, still clear local state
       console.error("Logout error:", error);
     } finally {
       localStorage.removeItem("userId");
       localStorage.removeItem("userEmail");
       localStorage.removeItem("username");
+      localStorage.removeItem("role");
       dispatch(logout());
       navigate("/login");
     }
   };
 
-  // ── LOADING STATE ──
+  // ── LOADING ──
   if (expensesLoading || incomeLoading) {
     return (
       <PageWrapper>
@@ -234,13 +220,8 @@ const HomePage = () => {
     );
   }
 
-  // Get first letter of username for avatar
-  // If username is "John", avatar shows "J"
-  // Falls back to first letter of email if no username
   const avatarLetter =
     username?.charAt(0) || userEmail?.charAt(0) || "U";
-
-  // Display name: username if available, otherwise email
   const displayName = username || userEmail || "User";
 
   // ── JSX ──
@@ -255,9 +236,7 @@ const HomePage = () => {
           Expense Tracker
         </Typography>
 
-        {/* NEW: Header right side — user profile + sign out */}
         <HeaderRight>
-          {/* NEW: User profile with avatar and username (Task 1) */}
           <UserProfile>
             <UserAvatar>{avatarLetter}</UserAvatar>
             <UserName>{displayName}</UserName>
@@ -296,11 +275,14 @@ const HomePage = () => {
         handleSaveIncome={handleSaveIncome}
       />
 
+      {/* UPDATED: Now passes handleEdit and remaining to TransactionHistory */}
       <TransactionHistory
         transactions={filteredTransactions}
         searchTerm={searchTerm}
         setSearchTerm={setSearchTerm}
         handleDelete={handleDelete}
+        handleEdit={handleEdit}
+        remaining={remaining}
       />
 
       <AddExpense onAddExpense={handleAddExpense} remaining={remaining} />
