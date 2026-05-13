@@ -1,3 +1,8 @@
+// ============================================================
+// FILE: src/pages/LoginPage/LoginPage.jsx
+// FIXED: Error message now shows correctly after api.js fix
+// ============================================================
+
 import React, { useEffect } from "react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
@@ -6,7 +11,6 @@ import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { loginRequest, clearError } from "../../store/slices/authSlice";
-
 
 const PageWrapper = styled.div`
   min-height: 100vh;
@@ -103,7 +107,6 @@ const ErrorMessage = styled.div`
   text-align: center;
 `;
 
-
 const validationSchema = Yup.object({
   email: Yup.string()
     .email("Please enter a valid email address")
@@ -113,12 +116,10 @@ const validationSchema = Yup.object({
     .required("Password is required"),
 });
 
-
 const LoginPage = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { loading, error, userId } = useSelector((state) => state.auth);
-
 
   useEffect(() => {
     if (userId) {
@@ -126,15 +127,20 @@ const LoginPage = () => {
     }
   }, [userId, navigate]);
 
+  // Clear error only on page mount
   useEffect(() => {
     dispatch(clearError());
-  }, [dispatch]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const formik = useFormik({
     initialValues: { email: "", password: "" },
     validationSchema: validationSchema,
     onSubmit: (values) => {
-      dispatch(loginRequest({ email: values.email, password: values.password }));
+      dispatch(clearError());
+      dispatch(
+        loginRequest({ email: values.email, password: values.password })
+      );
     },
   });
 
@@ -159,8 +165,13 @@ const LoginPage = () => {
 
         <Box component="form" onSubmit={formik.handleSubmit} noValidate>
           <StyledTextField
-            fullWidth id="email" name="email" label="Email"
-            type="email" variant="outlined" size="small"
+            fullWidth
+            id="email"
+            name="email"
+            label="Email"
+            type="email"
+            variant="outlined"
+            size="small"
             value={formik.values.email}
             onChange={formik.handleChange}
             onBlur={formik.handleBlur}
@@ -169,8 +180,13 @@ const LoginPage = () => {
           />
 
           <StyledTextField
-            fullWidth id="password" name="password" label="Password"
-            type="password" variant="outlined" size="small"
+            fullWidth
+            id="password"
+            name="password"
+            label="Password"
+            type="password"
+            variant="outlined"
+            size="small"
             value={formik.values.password}
             onChange={formik.handleChange}
             onBlur={formik.handleBlur}
@@ -189,16 +205,36 @@ const LoginPage = () => {
 
           <LinksRow>
             <Link
-              href="/register" underline="none"
-              onClick={(e) => { e.preventDefault(); navigate("/register"); }}
-              sx={{ color: "#333333", fontSize: "0.85rem", fontWeight: 500, cursor: "pointer", "&:hover": { textDecoration: "underline" } }}
+              href="/register"
+              underline="none"
+              onClick={(e) => {
+                e.preventDefault();
+                navigate("/register");
+              }}
+              sx={{
+                color: "#333333",
+                fontSize: "0.85rem",
+                fontWeight: 500,
+                cursor: "pointer",
+                "&:hover": { textDecoration: "underline" },
+              }}
             >
               Create Account
             </Link>
             <Link
-              href="/forgot-password" underline="none"
-              onClick={(e) => { e.preventDefault(); navigate("/forgot-password"); }}
-              sx={{ color: "#333333", fontSize: "0.85rem", fontWeight: 400, cursor: "pointer", "&:hover": { textDecoration: "underline" } }}
+              href="/forgot-password"
+              underline="none"
+              onClick={(e) => {
+                e.preventDefault();
+                navigate("/forgot-password");
+              }}
+              sx={{
+                color: "#333333",
+                fontSize: "0.85rem",
+                fontWeight: 400,
+                cursor: "pointer",
+                "&:hover": { textDecoration: "underline" },
+              }}
             >
               Forgot password
             </Link>

@@ -1,7 +1,6 @@
 // ============================================================
 // FILE: src/pages/HomePage/HomePage.jsx
-// UPDATED: displayName now uses email prefix (before @) as fallback
-//          "user1@gmail.com" → displays "user1"
+// UPDATED: Added try-catch to all handlers that could fail
 // ============================================================
 
 import React, { useState, useEffect } from "react";
@@ -28,7 +27,7 @@ import { logout } from "../../store/slices/authSlice";
 import { logoutUser } from "../../services/api";
 
 // ─────────────────────────────────────────────────────────────
-// STYLED COMPONENTS
+// STYLED COMPONENTS (unchanged)
 // ─────────────────────────────────────────────────────────────
 
 const PageWrapper = styled.div`
@@ -123,16 +122,29 @@ const HomePage = () => {
   const [incomeInput, setIncomeInput] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
 
+  // ── REDIRECT IF NOT LOGGED IN ──
   useEffect(() => {
-    if (!userId) {
+    try {
+      if (!userId) {
+        navigate("/login");
+      }
+    } catch (error) {
+      console.error("Navigation error:", error);
       navigate("/login");
     }
   }, [userId, navigate]);
 
+  // ── FETCH DATA ON LOAD ──
+  // NOTE: API errors are caught inside the sagas (expenseSaga, incomeSaga)
+  // The try-catch here only handles synchronous errors from dispatch itself
   useEffect(() => {
-    if (userId) {
-      dispatch(fetchExpensesRequest());
-      dispatch(fetchIncomeRequest());
+    try {
+      if (userId) {
+        dispatch(fetchExpensesRequest());
+        dispatch(fetchIncomeRequest());
+      }
+    } catch (error) {
+      console.error("Error dispatching fetch actions:", error);
     }
   }, [userId, dispatch]);
 
@@ -161,50 +173,124 @@ const HomePage = () => {
   // ── HANDLERS ──
 
   const handleEditIncome = () => {
-    setIncomeInput(income.toString());
-    setIsEditingIncome(true);
+    try {
+      setIncomeInput(income.toString());
+      setIsEditingIncome(true);
+    } catch (error) {
+      console.error("Error opening income edit:", error);
+    }
   };
 
   const handleSaveIncome = () => {
-    const newIncome = parseFloat(incomeInput);
-    if (!isNaN(newIncome) && newIncome >= 0) {
+    try {
+      const newIncome = parseFloat(incomeInput);
+
+      if (isNaN(newIncome)) {
+        throw new Error("Income value is not a valid number");
+      }
+
+      if (newIncome < 0) {
+        throw new Error("Income cannot be negative");
+      }
+
       dispatch(setIncomeRequest({ amount: newIncome }));
       setIsEditingIncome(false);
+    } catch (error) {
+      console.error("Error saving income:", error.message);
+      alert(error.message || "Failed to save income. Please try again.");
     }
   };
 
   const handleAddExpense = (name, cost) => {
-    if (cost > remaining) {
-      alert("Cannot add expense: cost exceeds remaining balance.");
-      return;
+    try {
+      if (!name || name.trim() === "") {
+        throw new Error("Expense name is required");
+      }
+
+      if (isNaN(cost) || cost <= 0) {
+        throw new Error("Expense cost must be a positive number");
+      }
+
+      if (cost > remaining) {
+        throw new Error("Cannot add expense: cost exceeds remaining balance");
+      }
+
+      dispatch(addExpenseRequest({ name, cost }));
+    } catch (error) {
+      console.error("Error adding expense:", error.message);
+      alert(error.message || "Failed to add expense. Please try again.");
     }
-    dispatch(addExpenseRequest({ name, cost }));
   };
 
   const handleEdit = (expenseId, name, cost) => {
-    dispatch(updateExpenseRequest({ expenseId, name, cost }));
+    try {
+      if (!expenseId) {
+        throw new Error("Invalid expense ID");
+      }
+
+      if (!name || name.trim() === "") {
+        throw new Error("Expense name cannot be empty");
+      }
+
+      if (isNaN(cost) || cost <= 0) {
+        throw new Error("Expense cost must be a positive number");
+      }
+
+      dispatch(updateExpenseRequest({ expenseId, name, cost }));
+    } catch (error) {
+      console.error("Error updating expense:", error.message);
+      alert(error.message || "Failed to update expense. Please try again.");
+    }
   };
 
   const handleDelete = (id, type) => {
-    if (type === "income") {
-      dispatch(setIncomeRequest({ amount: 0 }));
-      return;
+    try {
+      if (!id) {
+        throw new Error("Invalid item ID");
+      }
+
+      if (type === "income") {
+        dispatch(setIncomeRequest({ amount: 0 }));
+        return;
+      }
+
+      dispatch(deleteExpenseRequest({ expenseId: id }));
+    } catch (error) {
+      console.error("Error deleting item:", error.message);
+      alert(error.message || "Failed to delete item. Please try again.");
     }
-    dispatch(deleteExpenseRequest({ expenseId: id }));
   };
 
+  // handleSignOut is async and calls a real API — most important to have try-catch
   const handleSignOut = async () => {
     try {
       await logoutUser();
     } catch (error) {
-      console.error("Logout error:", error);
+      // Even if logout API fails, we still clear local data and redirect
+      // The user should always be able to sign out from the frontend
+      console.error("Logout API error:", error);
     } finally {
-      localStorage.removeItem("userId");
-      localStorage.removeItem("userEmail");
-      localStorage.removeItem("username");
-      localStorage.removeItem("role");
-      dispatch(logout());
-      navigate("/login");
+      // finally block ALWAYS runs — whether logout API succeeded or failed
+      // This ensures the user is always redirected to login
+      try {
+        localStorage.removeItem("userId");
+        localStorage.removeItem("userEmail");
+        localStorage.removeItem("username");
+        localStorage.removeItem("role");
+        dispatch(logout());
+        navigate("/login");
+      } catch (cleanupError) {
+        console.error("Error during logout cleanup:", cleanupError);
+        navigate("/login");
+      }
+    }
+  };
+
+  const handleSearch = (term) => {
+    try {
+      setSearchTerm(term);
+    } catch (error) {
+      console.error("Search error:", error);
     }
   };
 
@@ -219,16 +305,10 @@ const HomePage = () => {
     );
   }
 
-  // CHANGED: Display name logic
-  // Priority: username → email prefix → "User"
-  // "user1@gmail.com" → "user1"
-  // "himandhiow191@gmail.com" → "himandhiow191"
+  // ── DISPLAY NAME LOGIC ──
   const emailPrefix = userEmail ? userEmail.split("@")[0] : null;
-  const displayName = username && username.trim() !== ""
-    ? username
-    : emailPrefix || "User";
-
-  // Avatar: first letter of display name
+  const displayName =
+    username && username.trim() !== "" ? username : emailPrefix || "User";
   const avatarLetter = displayName.charAt(0).toUpperCase();
 
   // ── JSX ──
@@ -311,7 +391,7 @@ const HomePage = () => {
       <TransactionHistory
         transactions={filteredTransactions}
         searchTerm={searchTerm}
-        setSearchTerm={setSearchTerm}
+        setSearchTerm={handleSearch}
         handleDelete={handleDelete}
         handleEdit={handleEdit}
         remaining={remaining}
