@@ -1,8 +1,3 @@
-// ============================================================
-// FILE: src/components/TransactionHistory/TransactionHistory.jsx
-// FIXED: Removed unused 'costDifference' variable (ESLint error)
-// ============================================================
-
 import React, { useState } from "react";
 import {
   Box,
@@ -19,9 +14,6 @@ import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
 import styled from "styled-components";
 
-// ─────────────────────────────────────────────────────────────
-// STYLED COMPONENTS
-// ─────────────────────────────────────────────────────────────
 
 const HistorySection = styled.div`
   margin-bottom: 32px;
@@ -142,9 +134,6 @@ const EditTextField = styled(TextField)`
   }
 `;
 
-// ─────────────────────────────────────────────────────────────
-// THE COMPONENT
-// ─────────────────────────────────────────────────────────────
 
 const TransactionHistory = ({
   transactions,
@@ -185,13 +174,8 @@ const TransactionHistory = ({
       return;
     }
 
-    // Find the original expense to calculate max allowed cost
     const original = transactions.find((t) => t.id === id);
 
-    // FIXED: Removed unused 'costDifference' variable.
-    // The max allowed cost = original cost + remaining balance.
-    // e.g. if original cost is 500 and remaining is 200,
-    // the user can set the cost up to 700 (500 + 200).
     if (costNum > original.cost + remaining) {
       setEditError(
         `Cost exceeds available balance. Max allowed: Rs. ${(
@@ -240,7 +224,6 @@ const TransactionHistory = ({
         {transactions.length > 0 ? (
           transactions.map((transaction) => (
             <ExpenseItem key={transaction.id}>
-              {/* ── Main Row ── */}
               <ExpenseRow>
                 <ExpenseName>{transaction.name}</ExpenseName>
 
@@ -253,7 +236,6 @@ const TransactionHistory = ({
                     Rs. {transaction.cost.toFixed(2)}
                   </AmountBadge>
 
-                  {/* Edit button — only for expenses, not income */}
                   {transaction.type === "expense" && (
                     <IconButton
                       size="small"
@@ -289,7 +271,6 @@ const TransactionHistory = ({
                 </ItemRight>
               </ExpenseRow>
 
-              {/* ── Inline Edit Form ── */}
               {editingId === transaction.id && (
                 <EditForm>
                   <EditTextField

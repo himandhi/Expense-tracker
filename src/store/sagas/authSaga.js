@@ -1,11 +1,3 @@
-// ============================================================
-// FILE: src/store/sagas/authSaga.js
-// UPDATED:
-// 1. Store username and role in localStorage on login
-// 2. Pass username and role to loginSuccess action
-// 3. Pass username in register call (optional username field)
-// ============================================================
-
 import { call, put, takeLatest } from 'redux-saga/effects';
 import { loginUser, registerUser } from '../../services/api';
 import {
@@ -22,13 +14,11 @@ function* handleLogin(action) {
     const { email, password } = action.payload;
     const response = yield call(loginUser, email, password);
 
-    // CHANGED: Also store username and role in localStorage
     localStorage.setItem('userId', response.data.userId);
     localStorage.setItem('userEmail', response.data.email);
     localStorage.setItem('username', response.data.username || '');
     localStorage.setItem('role', response.data.role || 'user');
 
-    // CHANGED: Pass full response data including username and role
     yield put(loginSuccess(response.data));
   } catch (error) {
     const message =
@@ -39,7 +29,6 @@ function* handleLogin(action) {
 
 function* handleRegister(action) {
   try {
-    // CHANGED: Also pass username if provided
     const { email, password, username } = action.payload;
     yield call(registerUser, email, password, username);
     yield put(registerSuccess());

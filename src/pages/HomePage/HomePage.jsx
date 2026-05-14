@@ -1,8 +1,3 @@
-// ============================================================
-// FILE: src/pages/HomePage/HomePage.jsx
-// UPDATED: Added try-catch to all handlers that could fail
-// ============================================================
-
 import React, { useState, useEffect } from "react";
 import { Typography, Button } from "@mui/material";
 import styled from "styled-components";
@@ -25,10 +20,6 @@ import {
 } from "../../store/slices/incomeSlice";
 import { logout } from "../../store/slices/authSlice";
 import { logoutUser } from "../../services/api";
-
-// ─────────────────────────────────────────────────────────────
-// STYLED COMPONENTS (unchanged)
-// ─────────────────────────────────────────────────────────────
 
 const PageWrapper = styled.div`
   min-height: 100vh;
@@ -100,9 +91,6 @@ const UserName = styled.span`
   color: #333333;
 `;
 
-// ─────────────────────────────────────────────────────────────
-// THE HOME PAGE COMPONENT
-// ─────────────────────────────────────────────────────────────
 
 const HomePage = () => {
   const navigate = useNavigate();
@@ -122,7 +110,6 @@ const HomePage = () => {
   const [incomeInput, setIncomeInput] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
 
-  // ── REDIRECT IF NOT LOGGED IN ──
   useEffect(() => {
     try {
       if (!userId) {
@@ -134,9 +121,6 @@ const HomePage = () => {
     }
   }, [userId, navigate]);
 
-  // ── FETCH DATA ON LOAD ──
-  // NOTE: API errors are caught inside the sagas (expenseSaga, incomeSaga)
-  // The try-catch here only handles synchronous errors from dispatch itself
   useEffect(() => {
     try {
       if (userId) {
@@ -148,7 +132,6 @@ const HomePage = () => {
     }
   }, [userId, dispatch]);
 
-  // ── CALCULATIONS ──
   const totalSpent = expenses.reduce(
     (sum, expense) => sum + Number(expense.cost),
     0
@@ -170,7 +153,6 @@ const HomePage = () => {
     t.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // ── HANDLERS ──
 
   const handleEditIncome = () => {
     try {
@@ -261,17 +243,12 @@ const HomePage = () => {
     }
   };
 
-  // handleSignOut is async and calls a real API — most important to have try-catch
   const handleSignOut = async () => {
     try {
       await logoutUser();
     } catch (error) {
-      // Even if logout API fails, we still clear local data and redirect
-      // The user should always be able to sign out from the frontend
       console.error("Logout API error:", error);
     } finally {
-      // finally block ALWAYS runs — whether logout API succeeded or failed
-      // This ensures the user is always redirected to login
       try {
         localStorage.removeItem("userId");
         localStorage.removeItem("userEmail");
@@ -294,7 +271,6 @@ const HomePage = () => {
     }
   };
 
-  // ── LOADING ──
   if (expensesLoading || incomeLoading) {
     return (
       <PageWrapper>
@@ -305,13 +281,11 @@ const HomePage = () => {
     );
   }
 
-  // ── DISPLAY NAME LOGIC ──
   const emailPrefix = userEmail ? userEmail.split("@")[0] : null;
   const displayName =
     username && username.trim() !== "" ? username : emailPrefix || "User";
   const avatarLetter = displayName.charAt(0).toUpperCase();
 
-  // ── JSX ──
   return (
     <PageWrapper>
       <Header>
@@ -329,7 +303,6 @@ const HomePage = () => {
             <UserName>{displayName}</UserName>
           </UserProfile>
 
-          {/* Admin Panel button — only for admin users */}
           {role === "admin" && (
             <Button
               variant="outlined"

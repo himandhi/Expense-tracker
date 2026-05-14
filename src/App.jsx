@@ -1,8 +1,3 @@
-// ============================================================
-// FILE: src/App.jsx
-// UPDATED: Added AdminPage route
-// ============================================================
-
 import React from "react";
 import { ThemeProvider } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
@@ -23,19 +18,11 @@ function App() {
 
       <BrowserRouter>
         <Routes>
-          {/* Auth pages */}
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-
-          {/* User dashboard */}
           <Route path="/home" element={<HomePage />} />
-
-          {/* Admin dashboard — AdminPage itself checks the role
-              and redirects to /home if user is not admin */}
           <Route path="/admin" element={<AdminPage />} />
-
-          {/* Redirect root to login */}
           <Route path="/" element={<Navigate to="/login" replace />} />
         </Routes>
       </BrowserRouter>

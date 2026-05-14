@@ -1,8 +1,3 @@
-// ============================================================
-// FILE: src/store/slices/expenseSlice.js
-// UPDATED: Added updateExpense actions for edit functionality
-// ============================================================
-
 import { createSlice } from '@reduxjs/toolkit';
 
 const expenseSlice = createSlice({
@@ -13,7 +8,6 @@ const expenseSlice = createSlice({
     error: null,
   },
   reducers: {
-    // Fetch expenses
     fetchExpensesRequest: (state) => {
       state.loading = true;
       state.error = null;
@@ -27,7 +21,6 @@ const expenseSlice = createSlice({
       state.error = action.payload;
     },
 
-    // Add expense
     addExpenseRequest: (state) => {
       state.loading = true;
       state.error = null;
@@ -41,15 +34,12 @@ const expenseSlice = createSlice({
       state.error = action.payload;
     },
 
-    // NEW: Update expense
     updateExpenseRequest: (state) => {
       state.loading = true;
       state.error = null;
     },
     updateExpenseSuccess: (state, action) => {
       state.loading = false;
-      // Find the expense by id and replace it with the updated one
-      // action.payload is the updated expense returned from the backend
       const index = state.items.findIndex(
         (item) => item.id === action.payload.id
       );
@@ -62,7 +52,6 @@ const expenseSlice = createSlice({
       state.error = action.payload;
     },
 
-    // Delete expense
     deleteExpenseRequest: (state) => {
       state.loading = true;
       state.error = null;

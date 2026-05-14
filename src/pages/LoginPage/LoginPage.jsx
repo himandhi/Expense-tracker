@@ -1,8 +1,3 @@
-// ============================================================
-// FILE: src/pages/LoginPage/LoginPage.jsx
-// FIXED: Error message now shows correctly after api.js fix
-// ============================================================
-
 import React, { useEffect } from "react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
@@ -127,10 +122,9 @@ const LoginPage = () => {
     }
   }, [userId, navigate]);
 
-  // Clear error only on page mount
+
   useEffect(() => {
     dispatch(clearError());
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const formik = useFormik({

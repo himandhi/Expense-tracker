@@ -1,11 +1,3 @@
-// ============================================================
-// FILE: src/store/slices/authSlice.js
-// UPDATED:
-// 1. Added username and role to initial state
-// 2. loginSuccess now saves username and role
-// 3. logout now clears username and role too
-// ============================================================
-
 import { createSlice } from '@reduxjs/toolkit';
 
 const authSlice = createSlice({
@@ -13,9 +5,6 @@ const authSlice = createSlice({
   initialState: {
     userId: localStorage.getItem('userId') || null,
     userEmail: localStorage.getItem('userEmail') || null,
-    // NEW: Load username and role from localStorage on app start
-    // This means if the user refreshes the page, they stay logged in
-    // with their username visible — no need to fetch from backend again
     username: localStorage.getItem('username') || null,
     role: localStorage.getItem('role') || null,
     loading: false,
@@ -28,7 +17,6 @@ const authSlice = createSlice({
       state.error = null;
     },
 
-    // CHANGED: Now also saves username and role from response
     loginSuccess: (state, action) => {
       state.loading = false;
       state.userId = action.payload.userId;
@@ -61,7 +49,6 @@ const authSlice = createSlice({
       state.registerSuccess = false;
     },
 
-    // CHANGED: Also clears username and role on logout
     logout: (state) => {
       state.userId = null;
       state.userEmail = null;

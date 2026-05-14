@@ -1,8 +1,3 @@
-// ============================================================
-// FILE: src/store/sagas/expenseSaga.js
-// UPDATED: Added handleUpdateExpense saga for edit functionality
-// ============================================================
-
 import { call, put, takeLatest } from 'redux-saga/effects';
 import {
   getExpenses,
@@ -46,13 +41,10 @@ function* handleAddExpense(action) {
   }
 }
 
-// NEW: Handle expense update
 function* handleUpdateExpense(action) {
   try {
-    // action.payload = { expenseId, name, cost }
     const { expenseId, name, cost } = action.payload;
     const response = yield call(updateExpense, expenseId, { name, cost });
-    // updateExpenseSuccess updates the item in the Redux store
     yield put(updateExpenseSuccess(response.data));
   } catch (error) {
     const message =

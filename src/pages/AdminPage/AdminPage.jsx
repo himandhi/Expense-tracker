@@ -1,11 +1,3 @@
-// ============================================================
-// FILE: src/pages/AdminPage/AdminPage.jsx
-// UPDATED:
-// 1. $ → Rs in stat cards and expense amounts
-// 2. Settings shows only Admin Account section
-// 3. Username displays email prefix (part before @)
-// ============================================================
-
 import React, { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
@@ -20,19 +12,11 @@ import {
 } from "../../services/api";
 import styled from "styled-components";
 
-// ─────────────────────────────────────────────────────────────
-// HELPER: Get display name from email or username
-// "user1@gmail.com" → "user1"
-// ─────────────────────────────────────────────────────────────
 const getDisplayName = (username, email) => {
   if (username && username.trim() !== "") return username;
   if (email) return email.split("@")[0];
   return "—";
 };
-
-// ─────────────────────────────────────────────────────────────
-// STYLED COMPONENTS
-// ─────────────────────────────────────────────────────────────
 
 const AdminLayout = styled.div`
   display: flex;
@@ -382,9 +366,6 @@ const FieldLabel = styled.label`
   margin-bottom: 6px;
 `;
 
-// ─────────────────────────────────────────────────────────────
-// MAIN COMPONENT
-// ─────────────────────────────────────────────────────────────
 
 const AdminPage = () => {
   const navigate = useNavigate();
@@ -402,12 +383,10 @@ const AdminPage = () => {
   const [userSearch, setUserSearch] = useState("");
   const [expenseSearch, setExpenseSearch] = useState("");
 
-  // Settings form state
   const [adminPassword, setAdminPassword] = useState("");
   const [settingsSuccess, setSettingsSuccess] = useState("");
   const [settingsError, setSettingsError] = useState("");
 
-  // Redirect if not admin
   useEffect(() => {
     if (!userId) {
       navigate("/login");
@@ -418,7 +397,6 @@ const AdminPage = () => {
     }
   }, [role, userId, navigate]);
 
-  // Fetch all data
   useEffect(() => {
     if (role !== "admin") return;
 
@@ -449,7 +427,6 @@ const AdminPage = () => {
     fetchAllData();
   }, [role]);
 
-  // ── Handlers ──
 
   const handleDeleteUser = async (id) => {
     if (
@@ -506,7 +483,6 @@ const AdminPage = () => {
     }
   };
 
-  // ── Filtered data ──
   const filteredUsers = users.filter(
     (u) =>
       getDisplayName(u.username, u.email)
@@ -523,7 +499,6 @@ const AdminPage = () => {
         .includes(expenseSearch.toLowerCase())
   );
 
-  // ── Stats ──
   const totalExpenseAmount = expenses.reduce(
     (sum, e) => sum + Number(e.cost),
     0
@@ -533,7 +508,6 @@ const AdminPage = () => {
     .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
     .slice(0, 5);
 
-  // Access denied
   if (!role || role !== "admin") {
     return (
       <AccessDenied>
@@ -560,9 +534,6 @@ const AdminPage = () => {
     );
   }
 
-  // ─────────────────────────────────────────────────────────
-  // RENDER SECTIONS
-  // ─────────────────────────────────────────────────────────
 
   const renderOverview = () => (
     <>
@@ -596,7 +567,6 @@ const AdminPage = () => {
               </StatNote>
             </StatCard>
 
-            {/* CHANGED: $ → Rs */}
             <StatCard>
               <StatHeader>
                 <StatLabel>Total Expenses</StatLabel>
@@ -606,7 +576,7 @@ const AdminPage = () => {
               <StatNote>{expenses.length} transactions</StatNote>
             </StatCard>
 
-            {/* CHANGED: $ → Rs */}
+          
             <StatCard>
               <StatHeader>
                 <StatLabel>Avg per User</StatLabel>
@@ -625,7 +595,6 @@ const AdminPage = () => {
               <thead>
                 <tr>
                   <Th>User</Th>
-                  {/* CHANGED: $ Amount → Rs Amount */}
                   <Th>Amount (Rs)</Th>
                   <Th>Name</Th>
                   <Th>Date</Th>
@@ -635,14 +604,12 @@ const AdminPage = () => {
                 {recentExpenses.length > 0 ? (
                   recentExpenses.map((exp) => (
                     <tr key={exp.id}>
-                      {/* CHANGED: Use getDisplayName helper */}
                       <Td>
                         {getDisplayName(
                           exp.user?.username,
                           exp.user?.email
                         )}
                       </Td>
-                      {/* CHANGED: $ → Rs */}
                       <Td>Rs. {Number(exp.cost).toFixed(2)}</Td>
                       <Td>
                         <CategoryBadge>{exp.name}</CategoryBadge>
@@ -705,7 +672,6 @@ const AdminPage = () => {
               {filteredUsers.length > 0 ? (
                 filteredUsers.map((user) => (
                   <tr key={user.id}>
-                    {/* CHANGED: Use getDisplayName to show email prefix as name */}
                     <Td style={{ fontWeight: 600 }}>
                       {getDisplayName(user.username, user.email)}
                     </Td>
@@ -791,7 +757,6 @@ const AdminPage = () => {
               <tr>
                 <Th>ID</Th>
                 <Th>User</Th>
-                {/* CHANGED: Amount ($) → Amount (Rs) */}
                 <Th>Amount (Rs)</Th>
                 <Th>Name</Th>
                 <Th>Date</Th>
@@ -803,11 +768,9 @@ const AdminPage = () => {
                 filteredExpenses.map((exp) => (
                   <tr key={exp.id}>
                     <Td muted>#{exp.id}</Td>
-                    {/* CHANGED: Use getDisplayName */}
                     <Td style={{ fontWeight: 600 }}>
                       {getDisplayName(exp.user?.username, exp.user?.email)}
                     </Td>
-                    {/* CHANGED: $ → Rs */}
                     <Td>Rs. {Number(exp.cost).toFixed(2)}</Td>
                     <Td>
                       <CategoryBadge>{exp.name}</CategoryBadge>
@@ -842,7 +805,6 @@ const AdminPage = () => {
     </>
   );
 
-  // CHANGED: Settings now shows ONLY the Admin Account section
   const renderSettings = () => (
     <>
       <PageTitle>System Settings</PageTitle>
@@ -857,7 +819,6 @@ const AdminPage = () => {
 
         <div style={{ marginTop: "16px" }}>
           <FieldLabel>Admin Email</FieldLabel>
-          {/* Show the current admin email (read-only display) */}
           <FormInput
             type="email"
             value={userEmail || ""}
@@ -883,13 +844,9 @@ const AdminPage = () => {
     </>
   );
 
-  // ─────────────────────────────────────────────────────────
-  // MAIN RENDER
-  // ─────────────────────────────────────────────────────────
 
   return (
     <AdminLayout>
-      {/* ── SIDEBAR ── */}
       <Sidebar>
         <SidebarBrand>
           <BrandIcon>
@@ -972,7 +929,6 @@ const AdminPage = () => {
         </div>
       </Sidebar>
 
-      {/* ── MAIN CONTENT ── */}
       <MainContent>
         {activeSection === "overview" && renderOverview()}
         {activeSection === "users" && renderUsers()}
